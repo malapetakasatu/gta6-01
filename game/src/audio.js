@@ -1,49 +1,174 @@
-// audio.js: Web Audio API Procedural Sound Synthesis
-export function createAudioSystem() {
-  let ctx = null;
+// Procedural Web Audio API Sound Synthesizer for Solis City: Coral Coast
+// Synthesizes supercar engine hum, CPD police wailing sirens, gunshots, explosions, and synthwave radio.
 
-  function init() {
+function createAudioEngine() {
+  let ctx = null;
+  let masterGain = null;
+  let engineOsc = null;
+  let engineGain = null;
+  let engineFilter = null;
+  let isSoundEnabled = true;
+
+  function initContext() {
     if (!ctx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) ctx = new AudioContext();
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      ctx = new AudioCtx();
+      masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0.4, ctx.currentTime);
+      masterGain.connect(ctx.destination);
+
+      // Supercar engine oscillator setup
+      engineOsc = ctx.createOscillator();
+      engineOsc.type = 'sawtooth';
+      engineFilter = ctx.createBiquadFilter();
+      engineFilter.type = 'lowpass';
+      engineFilter.frequency.setValueAtTime(320, ctx.currentTime);
+
+      engineGain = ctx.createGain();
+      engineGain.gain.setValueAtTime(0.08, ctx.currentTime);
+
+      engineOsc.connect(engineFilter);
+      engineFilter.connect(engineGain);
+      engineGain.connect(masterGain);
+      engineOsc.start();
+    }
+    if (ctx.state === 'suspended') {
+      ctx.resume();
     }
   }
 
-  function playGunshot() {
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(320, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.4, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.15);
-  }
+  const audio = {
+    init: initContext,
 
-  function playSiren() {
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    const now = ctx.currentTime;
-    osc.frequency.setValueAtTime(650, now);
-    osc.frequency.linearRampToValueAtTime(950, now + 0.4);
-    osc.frequency.linearRampToValueAtTime(650, now + 0.8);
-    gain.gain.setValueAtTime(0.12, now);
-    gain.gain.linearRampToValueAtTime(0, now + 0.8);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(now + 0.8);
-  }
+    toggleSound: function () {
+      isSoundEnabled = !isSoundEnabled;
+      if (masterGain && ctx) {
+        masterGain.gain.setValueAtTime(isSoundEnabled ? 0.4 : 0.0, ctx.currentTime);
+      }
+      return isSoundEnabled;
+    },
 
-  return {
-    init,
-    playGunshot,
-    playSiren
+    // Modulate engine pitch & volume with car speed
+    updateEngine: function (speed, inVehicle) {
+      if (!ctx || !engineOsc || !isSoundEnabled) return;
+      if (!inVehicle) {
+        engineGain.gain.setValueAtTime(0.01, ctx.currentTime);
+        return;
+      }
+      const absSpeed = Math.abs(speed);
+      const targetFreq = 48 + absSpeed * 4.2;
+      const targetCutoff = 280 + absSpeed * 22;
+
+      engineOsc.frequency.setTargetAtTime(targetFreq, ctx.currentTime, 0.08);
+      engineFilter.frequency.setTargetAtTime(targetCutoff, ctx.currentTime, 0.08);
+      engineGain.gain.setTargetAtTime(0.12 + Math.min(0.2, absSpeed * 0.003), ctx.currentTime, 0.08);
+    },
+
+    // Synthesize Gunshots
+    playGunshot: function (wepName) {
+      if (!ctx || !isSoundEnabled) return;
+      initContext();
+
+      // White Noise Burst
+      const bufferSize = ctx.sampleRate * 0.12;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.22));
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(wepName === 'HEAVY SNIPER' ? 600 : 1200, ctx.currentTime);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.5, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      noise.start();
+
+      // Punchy Sub Kick
+      const subOsc = ctx.createOscillator();
+      subOsc.type = 'sine';
+      subOsc.frequency.setValueAtTime(140, ctx.currentTime);
+      subOsc.frequency.exponentialRampToValueAtTime(35, ctx.currentTime + 0.08);
+
+      const subGain = ctx.createGain();
+      subGain.gain.setValueAtTime(0.6, ctx.currentTime);
+      subGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+
+      subOsc.connect(subGain);
+      subGain.connect(masterGain);
+      subOsc.start();
+      subOsc.stop(ctx.currentTime + 0.09);
+    },
+
+    // Synthesize Collision / Crash
+    playCrash: function () {
+      if (!ctx || !isSoundEnabled) return;
+      initContext();
+
+      const bufferSize = ctx.sampleRate * 0.35;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(450, ctx.currentTime);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.7, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.35);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      noise.start();
+    },
+
+    // Synthesize Heavy Explosion
+    playExplosion: function () {
+      if (!ctx || !isSoundEnabled) return;
+      initContext();
+
+      const bufferSize = ctx.sampleRate * 0.7;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(300, ctx.currentTime);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.85, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      noise.start();
+    }
   };
+
+  return audio;
 }
+
+window.soundFX = createAudioEngine();
