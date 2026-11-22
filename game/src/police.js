@@ -1,147 +1,149 @@
-// Tactical Coral Police Department (CPD) Pursuit AI System
-// Features: 5 wanted stars escalation, dynamic interceptor cruisers,
-// roadblock deployments with spike strips, and CONDOR-1 tactical helicopter tracking.
+// SOLIS CITY: CORAL COAST - Tactical CPD Pursuit AI & Wanted Star Manager
+// 4 Wanted Stars, aggressive ramming interceptors, tactical roadblocks, dispatch alerts.
 
-import { Vehicle } from './vehicles.js';
+const THREE = window.THREE;
 
-export class PoliceSystem {
-  constructor(scene, city) {
+export class PoliceManager {
+  constructor(scene, city, vehicleManager) {
     this.scene = scene;
     this.city = city;
+    this.vm = vehicleManager;
 
-    this.wantedLevel = 1;
-    this.heat = 20;
+    this.wantedLevel = 0; // 0 to 4 stars
     this.cruisers = [];
-    this.helicopter = null;
+    this.maxCruisers = 4;
+    this.pursuitCooldown = 0;
     this.roadblocks = [];
 
-    this.evasionTimer = 0;
-    this.maxCruisers = 4;
-
     this.dispatchMessages = [
-      "10-4, suspect confirmed driving coral supercar on Ocean Drive.",
-      "All units in Coral Coast, code 3 pursuit initiated. Interceptors dispatched.",
-      "Air support CONDOR-1 is airborne, searchlight tracking active.",
-      "Suspect evading through Downtown canyons. Requesting tactical roadblocks.",
-      "Warning: Suspect is heavily armed and dangerous. Authorization for PIT maneuvers granted."
+      "All units, suspect spotted in Coral Marina. Code 3 authorized.",
+      "Suspect driving orange Veloce GTS Turbo at reckless speed!",
+      "CPD Interceptors deploy tactical pit-maneuver!",
+      "Airborne CONDOR-1 in pursuit! Roadblock established on Ocean Blvd!"
     ];
-
-    this.initCruisers();
-    this.initHelicopter();
   }
 
-  initCruisers() {
-    for (let i = 0; i < 3; i++) {
-      const cruiser = new Vehicle(this.scene, "police");
-      cruiser.position.set(-240 + i * 40, 0, -80 + i * 50);
+  setWantedLevel(stars) {
+    stars = Math.max(0, Math.min(4, stars));
+    if (this.wantedLevel !== stars) {
+      this.wantedLevel = stars;
+      this.onWantedChanged();
+    }
+  }
+
+  addWantedStar() {
+    this.setWantedLevel(this.wantedLevel + 1);
+  }
+
+  onWantedChanged() {
+    // Update Stars UI
+    for (let i = 1; i <= 5; i++) {
+      const el = document.getElementById(`star-${i}`);
+      if (el) {
+        if (i <= this.wantedLevel) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      }
+    }
+
+    // Trigger dispatch notification
+    if (this.wantedLevel > 0) {
+      this.showDispatch(this.dispatchMessages[this.wantedLevel - 1]);
+      this.spawnCruisersForWanted();
+    }
+  }
+
+  showDispatch(text) {
+    const box = document.getElementById('dispatch-box');
+    const msg = document.getElementById('dispatch-text');
+    if (box && msg) {
+      msg.textContent = text;
+      box.classList.add('active');
+      setTimeout(() => box.classList.remove('active'), 4500);
+    }
+  }
+
+  spawnCruisersForWanted() {
+    while (this.cruisers.length < this.wantedLevel + 1 && this.cruisers.length < this.maxCruisers) {
+      const playerPos = this.vm.supercar.pos;
+      const spawnOffset = new THREE.Vector3(
+        (Math.random() - 0.5) * 120,
+        0,
+        (Math.random() - 0.5) * 120
+      );
+      const spawnPos = playerPos.clone().add(spawnOffset);
+      const cruiser = this.vm.createPoliceCruiser(spawnPos);
       this.cruisers.push(cruiser);
     }
   }
 
-  initHelicopter() {
-    this.helicopter = new Vehicle(this.scene, "helicopter");
-    this.helicopter.position.set(-200, 35, 0);
+  createRoadblock(aheadPos) {
+    // 2 police cruisers parked in V-formation blocking road
+    const cruiserA = this.vm.createPoliceCruiser(aheadPos.clone().add(new THREE.Vector3(-4, 0, 0)));
+    cruiserA.rotY = 0.4;
+    cruiserA.mesh.rotation.y = 0.4;
+
+    const cruiserB = this.vm.createPoliceCruiser(aheadPos.clone().add(new THREE.Vector3(4, 0, 0)));
+    cruiserB.rotY = -0.4;
+    cruiserB.mesh.rotation.y = -0.4;
+
+    this.roadblocks.push(cruiserA, cruiserB);
   }
 
-  addHeat(amount) {
-    this.heat = Math.min(100, this.heat + amount);
-    if (this.heat > 85) this.wantedLevel = 5;
-    else if (this.heat > 65) this.wantedLevel = 4;
-    else if (this.heat > 45) this.wantedLevel = 3;
-    else if (this.heat > 25) this.wantedLevel = 2;
-    else if (this.heat > 10) this.wantedLevel = 1;
-    else this.wantedLevel = 0;
-
-    this.triggerDispatchAudio();
-  }
-
-  triggerDispatchAudio() {
-    const dispatchEl = document.getElementById('dispatch-text');
-    if (dispatchEl) {
-      const msg = this.dispatchMessages[Math.min(this.wantedLevel - 1, this.dispatchMessages.length - 1)] || "10-99 All units code 3.";
-      dispatchEl.innerText = msg;
-    }
-  }
-
-  deployRoadblock(playerPos) {
-    // Deploy tactical roadblock ahead on nearest road intersection
-    const targetNode = this.city.getNearestRoadNode(playerPos.x, playerPos.z - 120);
-
-    const barrierMat = new THREE.MeshStandardMaterial({ color: 0xff8800, roughness: 0.5 });
-    const barrierGeo = new THREE.BoxGeometry(18, 1.2, 0.8);
-    const barrier = new THREE.Mesh(barrierGeo, barrierMat);
-    barrier.position.set(targetNode.x, 0.6, targetNode.z);
-    this.scene.add(barrier);
-
-    this.roadblocks.push({
-      mesh: barrier,
-      x: targetNode.x,
-      z: targetNode.z
-    });
-  }
-
-  update(dt, playerPos, playerVehicle) {
-    // 1. Helicopter Pursuit Logic
-    if (this.helicopter && this.wantedLevel >= 3) {
-      this.helicopter.mesh.visible = true;
-      this.helicopter.updateHelicopter(dt, playerPos);
-    } else if (this.helicopter) {
-      this.helicopter.mesh.visible = false;
+  update(delta, time, playerPos) {
+    // Update Helicopter Spotlight Tracking
+    if (this.vm.helicopter) {
+      this.vm.helicopter.targetPos.copy(playerPos);
     }
 
-    // 2. Cruisers Tactical AI
+    // Update Cruisers AI
     this.cruisers.forEach((cruiser, idx) => {
-      if (this.wantedLevel === 0) {
-        cruiser.mesh.visible = false;
-        return;
+      // Flashing Lightbars
+      const flash = Math.sin(time * 14 + idx) > 0;
+      cruiser.blueLight.material.color.setHex(flash ? 0x0088ff : 0x001144);
+      cruiser.redLight.material.color.setHex(!flash ? 0xff0033 : 0x440008);
+
+      if (this.wantedLevel === 0) return;
+
+      // Pursue Player
+      const toPlayer = playerPos.clone().sub(cruiser.pos);
+      const dist = toPlayer.length();
+
+      if (dist > 3.0) {
+        // Calculate desired heading angle
+        const targetAngle = Math.atan2(toPlayer.x, toPlayer.z);
+        // Smoothly steer towards player
+        let angleDiff = targetAngle - cruiser.rotY;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+        cruiser.rotY += Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), 0.045);
+
+        // Accelerate
+        cruiser.speed = Math.min(cruiser.maxSpeed, cruiser.speed + 0.03);
+      } else {
+        // Aggressive Ramming Impact!
+        cruiser.speed *= 0.5;
+        this.vm.supercar.speed *= 0.7;
       }
-      cruiser.mesh.visible = true;
 
-      const dx = playerPos.x - cruiser.position.x;
-      const dz = playerPos.z - cruiser.position.z;
-      const dist = Math.sqrt(dx * dx + dz * dz);
+      cruiser.velocity.set(
+        Math.sin(cruiser.rotY) * cruiser.speed,
+        0,
+        Math.cos(cruiser.rotY) * cruiser.speed
+      );
 
-      // Target angle towards player
-      const targetAngle = Math.atan2(dx, dz);
-      let angleDiff = targetAngle - cruiser.rotation.y;
-      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-
-      // Simulated cruiser steering & throttle
-      const simInput = {
-        forward: dist > 8,
-        backward: dist < 4,
-        left: angleDiff > 0.1,
-        right: angleDiff < -0.1,
-        handbrake: dist < 15 && Math.abs(angleDiff) > 1.2,
-        nitro: this.wantedLevel >= 4 && dist > 30
-      };
-
-      cruiser.updatePhysics(dt, simInput, this.city);
-
-      // Ramming / PIT maneuver logic
-      if (dist < 4.5 && playerVehicle) {
-        playerVehicle.speed *= 0.88;
-        cruiser.speed *= 0.7;
+      const nextPos = cruiser.pos.clone().add(cruiser.velocity);
+      if (!this.city.checkCollision(nextPos, cruiser.radius)) {
+        cruiser.pos.copy(nextPos);
+      } else {
+        cruiser.rotY += 0.8; // Dodge obstacle
       }
+
+      cruiser.mesh.position.copy(cruiser.pos);
+      cruiser.mesh.rotation.y = cruiser.rotY;
     });
-
-    // 3. Evasion countdown
-    const nearestCruiserDist = Math.min(...this.cruisers.map(c => {
-      const dx = c.position.x - playerPos.x;
-      const dz = c.position.z - playerPos.z;
-      return Math.sqrt(dx * dx + dz * dz);
-    }));
-
-    if (nearestCruiserDist > 140) {
-      this.evasionTimer += dt;
-      if (this.evasionTimer > 12) {
-        this.wantedLevel = Math.max(0, this.wantedLevel - 1);
-        this.heat = Math.max(0, this.heat - 25);
-        this.evasionTimer = 0;
-      }
-    } else {
-      this.evasionTimer = 0;
-    }
   }
 }

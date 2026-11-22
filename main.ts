@@ -13,13 +13,13 @@ import { buildDossier } from './vendor/makefun-game.ts';
 const here = fileURLToPath(new URL('.', import.meta.url));
 const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
+// Initialized Solis Engine bundle pipeline
 function logBundleSummary(outputDir: string) {
   const gameDir = join(outputDir, 'game');
   const shotsDir = join(outputDir, 'screenshots');
   const gameCount = existsSync(gameDir) ? readdirSync(gameDir).length : 0;
   const shotCount = existsSync(shotsDir) ? readdirSync(shotsDir).length : 0;
   console.log(`[SOLIS] Bundled: game files present (${gameCount}), screenshots (${shotCount})`);
-  console.log('[SOLIS ENGINE] Initializing AAA Coral Coast environment...');
 }
 
 function verifyLimits(dir: string) {
@@ -50,6 +50,6 @@ const dossier = buildDossier(out, {
   game_path_max_bytes: 1000,
 });
 
+// Write verified dossier matching makefun game format
 writeFileSync(join(out, 'dossier.json'), dossier);
 console.log(`[SOLIS] Dossier generated successfully: ${dossier.length} bytes`);
-console.log('[SOLIS ENGINE] 6 districts ready for deployment.');

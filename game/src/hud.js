@@ -1,202 +1,115 @@
-// AAA HUD, Radar Minimap & Vector GPS Route Renderer for SOLIS CITY: CORAL COAST
-// Features: Dynamic 2D canvas radar, live GPS polyline, wanted stars glow,
-// digital speedometer with RPM/nitro gauges, and tactical dispatch ticker.
+// SOLIS CITY: CORAL COAST - Dynamic Radar Minimap & Vector GPS Route HUD
+// Circular radar frame, rotating compass, player blip, police blips, vector navigation path.
 
 export class HUD {
   constructor() {
     this.radarCanvas = document.getElementById('radar-canvas');
-    this.radarCtx = this.radarCanvas ? this.radarCanvas.getContext('2d') : null;
-
-    // Cache HUD DOM Elements
-    this.speedValEl = document.getElementById('speedo-val');
-    this.speedGearEl = document.getElementById('speedo-gear');
-    this.rpmFillEl = document.getElementById('rpm-fill');
-    this.nitroFillEl = document.getElementById('nitro-fill');
-    this.weaponNameEl = document.getElementById('weapon-name');
-    this.ammoCountEl = document.getElementById('ammo-count');
-    this.hpFillEl = document.getElementById('hp-fill');
-    this.armorFillEl = document.getElementById('armor-fill');
-    this.specialFillEl = document.getElementById('special-fill');
-    this.districtEl = document.getElementById('hud-district');
-    this.radarTagEl = document.getElementById('radar-district-tag');
-    this.missionTitleEl = document.getElementById('mission-title');
-    this.missionObjEl = document.getElementById('mission-objective');
-    this.missionDistEl = document.getElementById('mission-dist');
-    this.stars = document.querySelectorAll('#wanted-stars .star');
-  }
-
-  update(player, vehicle, combat, police, missions, city) {
-    // 1. Speedometer & Gauges Update
-    let speedKm = 0;
-    let rpm = 0;
-    let gear = "N";
-    let nitro = 100;
-
-    if (player.inVehicle && vehicle) {
-      speedKm = Math.round(Math.abs(vehicle.speed) * 3.6);
-      nitro = vehicle.nitroFuel;
-      rpm = (speedKm % 48) / 48;
-      if (vehicle.speed < -0.1) gear = "R";
-      else if (speedKm < 1) gear = "1";
-      else if (speedKm < 45) gear = "2";
-      else if (speedKm < 90) gear = "3";
-      else if (speedKm < 145) gear = "4";
-      else if (speedKm < 200) gear = "5";
-      else gear = "6";
+    if (this.radarCanvas) {
+      this.ctx = this.radarCanvas.getContext('2d');
     }
 
-    if (this.speedValEl) this.speedValEl.innerText = speedKm.toString().padStart(3, '0');
-    if (this.speedGearEl) this.speedGearEl.innerText = gear;
-    if (this.rpmFillEl) this.rpmFillEl.style.width = `${Math.min(100, rpm * 100)}%`;
-    if (this.nitroFillEl) this.nitroFillEl.style.width = `${nitro}%`;
-
-    // 2. Health & Status Bars
-    if (this.hpFillEl) this.hpFillEl.style.width = `${player.health}%`;
-    if (this.armorFillEl) this.armorFillEl.style.width = `${player.armor}%`;
-
-    // 3. Weapon & Ammo
-    const wp = combat.getCurrentWeapon();
-    if (this.weaponNameEl) this.weaponNameEl.innerText = wp.name;
-    if (this.ammoCountEl) this.ammoCountEl.innerText = `${combat.currentMag} / ${wp.reserve}`;
-
-    // 4. Wanted Level Stars
-    this.stars.forEach((star, idx) => {
-      if (idx < police.wantedLevel) {
-        star.classList.add('active');
-      } else {
-        star.classList.remove('active');
-      }
-    });
-
-    // 5. District Telemetry
-    const currentDistrict = city.getDistrict(player.position.x, player.position.z);
-    if (this.districtEl) this.districtEl.innerText = currentDistrict;
-    if (this.radarTagEl) this.radarTagEl.innerText = currentDistrict.toUpperCase();
-
-    // 6. Mission Tracker
-    const curMission = missions.getCurrentMission();
-    if (curMission) {
-      if (this.missionTitleEl) this.missionTitleEl.innerText = curMission.title;
-      if (this.missionObjEl) this.missionObjEl.innerText = curMission.desc;
-      const dx = player.position.x - curMission.waypoint.x;
-      const dz = player.position.z - curMission.waypoint.z;
-      const dist = Math.round(Math.sqrt(dx * dx + dz * dz));
-      if (this.missionDistEl) this.missionDistEl.innerText = `TARGET: ${dist}m`;
-    }
-
-    // 7. Radar Minimap 2D Render
-    this.renderRadar(player, police, curMission);
+    this.speedEl = document.getElementById('speed-number');
+    this.gearEl = document.getElementById('gear-indicator');
+    this.rpmBar = document.getElementById('rpm-bar');
+    this.healthBar = document.getElementById('health-bar');
+    this.armourBar = document.getElementById('armour-bar');
   }
 
-  renderRadar(player, police, curMission) {
-    if (!this.radarCtx) return;
-    const ctx = this.radarCtx;
+  showNotification(text) {
+    const box = document.getElementById('dispatch-box');
+    const msg = document.getElementById('dispatch-text');
+    if (box && msg) {
+      msg.textContent = text;
+      box.classList.add('active');
+      setTimeout(() => box.classList.remove('active'), 4000);
+    }
+  }
+
+  updateRadar(playerPos, playerRotY, targetPos, policeUnits = []) {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
     const w = this.radarCanvas.width;
     const h = this.radarCanvas.height;
     const cx = w / 2;
     const cy = h / 2;
-    const scale = 0.42; // Map scale factor
+    const scale = 0.55; // World to radar zoom scale
 
     ctx.clearRect(0, 0, w, h);
 
-    // Save context for player rotation
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(-player.rotation);
+    // Radar Base Background
+    ctx.fillStyle = '#080d1a';
+    ctx.beginPath();
+    ctx.arc(cx, cy, cx - 2, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Draw Ocean Coastline on the West
-    const oceanScreenX = (-450 - player.position.x) * scale;
-    ctx.fillStyle = 'rgba(0, 100, 200, 0.45)';
-    ctx.fillRect(oceanScreenX - 500, -500, 500, 1000);
-
-    // Draw Major City Road Grid
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.22)';
-    ctx.lineWidth = 4;
-
-    const nsRoads = [-300, -180, -60, 60, 180, 300];
-    nsRoads.forEach(rx => {
-      const sx = (rx - player.position.x) * scale;
+    // Concentric Range Rings
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
+    ctx.lineWidth = 1;
+    [30, 60, 90].forEach(r => {
       ctx.beginPath();
-      ctx.moveTo(sx, -400);
-      ctx.lineTo(sx, 400);
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.stroke();
     });
 
-    const ewRoads = [-320, -160, 0, 160, 320];
-    ewRoads.forEach(rz => {
-      const sz = (rz - player.position.z) * scale;
-      ctx.beginPath();
-      ctx.moveTo(-400, sz);
-      ctx.lineTo(400, sz);
-      ctx.stroke();
-    });
+    // Vector GPS Path to Mission Target
+    if (targetPos) {
+      const tx = cx + (targetPos.x - playerPos.x) * scale;
+      const ty = cy + (targetPos.z - playerPos.z) * scale;
 
-    // Draw Vector GPS Route Polyline to Active Waypoint
-    if (curMission && curMission.waypoint) {
-      const wx = (curMission.waypoint.x - player.position.x) * scale;
-      const wz = (curMission.waypoint.z - player.position.z) * scale;
-
-      ctx.strokeStyle = '#ffd200';
+      ctx.strokeStyle = '#00f0ff';
       ctx.lineWidth = 3;
-      ctx.setLineDash([4, 4]);
+      ctx.setLineDash([6, 4]);
       ctx.beginPath();
-      ctx.moveTo(0, 0);
-      // Route via nearest road grid turn
-      ctx.lineTo(0, wz);
-      ctx.lineTo(wx, wz);
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(tx, ty);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Gold Waypoint Diamond
-      ctx.fillStyle = '#ffd200';
+      // Pulsing Gold Mission Target Blip
+      ctx.fillStyle = '#ffcc00';
       ctx.beginPath();
-      ctx.moveTo(wx, wz - 6);
-      ctx.lineTo(wx + 6, wz);
-      ctx.lineTo(wx, wz + 6);
-      ctx.lineTo(wx - 6, wz);
-      ctx.closePath();
+      ctx.arc(tx, ty, 5, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Draw Police Cruisers (Flashing Red / Blue Blips)
-    police.cruisers.forEach((cruiser, idx) => {
-      if (!cruiser.mesh.visible) return;
-      const px = (cruiser.position.x - player.position.x) * scale;
-      const pz = (cruiser.position.z - player.position.z) * scale;
-
-      ctx.fillStyle = (Date.now() + idx * 200) % 400 > 200 ? '#ff0033' : '#0066ff';
-      ctx.beginPath();
-      ctx.arc(px, pz, 4, 0, Math.PI * 2);
-      ctx.fill();
+    // CPD Police Unit Blips (Flashing Red/Blue)
+    policeUnits.forEach(cop => {
+      const px = cx + (cop.pos.x - playerPos.x) * scale;
+      const py = cy + (cop.pos.z - playerPos.z) * scale;
+      if (Math.hypot(px - cx, py - cy) < cx - 6) {
+        ctx.fillStyle = Math.random() > 0.5 ? '#ff2222' : '#0066ff';
+        ctx.beginPath();
+        ctx.arc(px, py, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
     });
 
-    // Draw Police Helicopter (Red Chevron)
-    if (police.helicopter && police.helicopter.mesh.visible) {
-      const hx = (police.helicopter.position.x - player.position.x) * scale;
-      const hz = (police.helicopter.position.z - player.position.z) * scale;
-      ctx.fillStyle = '#ff0055';
-      ctx.beginPath();
-      ctx.moveTo(hx, hz - 5);
-      ctx.lineTo(hx + 5, hz + 5);
-      ctx.lineTo(hx, hz + 2);
-      ctx.lineTo(hx - 5, hz + 5);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    ctx.restore();
-
-    // Center Player Arrow (Cyan Triangle)
+    // Player Blip (Neon Cyan Arrow)
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-playerRotY + Math.PI);
     ctx.fillStyle = '#00f0ff';
-    ctx.shadowColor = '#00f0ff';
-    ctx.shadowBlur = 8;
     ctx.beginPath();
-    ctx.moveTo(cx, cy - 7);
-    ctx.lineTo(cx + 6, cy + 6);
-    ctx.lineTo(cx, cy + 3);
-    ctx.lineTo(cx - 6, cy + 6);
+    ctx.moveTo(0, -7);
+    ctx.lineTo(5, 6);
+    ctx.lineTo(0, 3);
+    ctx.lineTo(-5, 6);
     ctx.closePath();
     ctx.fill();
-    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  updateStats(car, player) {
+    if (car) {
+      const speedMPH = Math.round(Math.abs(car.speed) * 60);
+      if (this.speedEl) this.speedEl.textContent = speedMPH;
+      if (this.gearEl) this.gearEl.textContent = `GEAR ${car.gear}`;
+      if (this.rpmBar) this.rpmBar.style.width = `${car.rpm * 100}%`;
+    }
+
+    if (player) {
+      if (this.healthBar) this.healthBar.style.width = `${(player.health / player.maxHealth) * 100}%`;
+      if (this.armourBar) this.armourBar.style.width = `${(player.armour / player.maxArmour) * 100}%`;
+    }
   }
 }

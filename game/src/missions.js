@@ -1,161 +1,166 @@
-// 8 Story Missions Campaign across 6 City Districts
-// Missions: Speed Trap Sprint, Marina Heist, Downtown Velocity, Vice Strip Showdown,
-// Contraband Hijack, Roadblock Breaker, Condor Down, Solis Syndicate Finale.
+// SOLIS CITY: CORAL COAST - 8-Mission Story Campaign Manager
+// Narrative progression, checkpoints, district waypoints, objectives, rewards.
 
-export class MissionSystem {
-  constructor(scene) {
+const THREE = window.THREE;
+
+export class MissionManager {
+  constructor(scene, hud, policeManager) {
     this.scene = scene;
-    this.currentIndex = 0;
-    this.completed = false;
+    this.hud = hud;
+    this.police = policeManager;
 
+    this.currentMissionIndex = 0;
     this.missions = [
       {
         id: 1,
-        title: "Coral Coast Arrival",
-        district: "Ocean Drive",
-        desc: "Sprint the Veloce GTS Turbo through the coastal speed trap at 180+ km/h.",
-        waypoint: { x: -300, z: 280 },
-        speedTarget: 180,
-        reward: "$2,500"
+        title: "CORAL COAST AWAKENING",
+        district: "CORAL MARINA",
+        objective: "Mount the Veloce GTS Turbo and reach Downtown Core.",
+        target: new THREE.Vector3(-50, 0, 0),
+        reward: "$5,000",
+        wantedReward: 0
       },
       {
         id: 2,
-        title: "Marina Bay Heist",
-        district: "Marina Bay",
-        desc: "Infiltrate the luxury marina dock and retrieve the encrypted Syndicate lockbox.",
-        waypoint: { x: -60, z: 240 },
-        reward: "$15,000 + Carbine Mk-II"
+        title: "NEON SYNDICATE DROP",
+        district: "OCEAN BOULEVARD",
+        objective: "Intercept the contraband package at Ocean Blvd Pier.",
+        target: new THREE.Vector3(100, 0, -150),
+        reward: "$12,000",
+        wantedReward: 1
       },
       {
         id: 3,
-        title: "Downtown Velocity",
-        district: "Downtown Solis",
-        desc: "Race through the financial skyscraper canyon checkpoints in under 60 seconds.",
-        waypoint: { x: 180, z: 80 },
-        reward: "$20,000 + Turbo Tune"
+        title: "SKYLINE HEIST ESCAPE",
+        district: "DOWNTOWN CORE",
+        objective: "Break through CPD perimeter around Coral Bank Tower.",
+        target: new THREE.Vector3(-150, 0, 100),
+        reward: "$25,000",
+        wantedReward: 2
       },
       {
         id: 4,
-        title: "Vice Strip Showdown",
-        district: "Vice Strip",
-        desc: "Neutralize rival cartel enforcers outside the Neon Palms Casino.",
-        waypoint: { x: -60, z: -280 },
-        reward: "$35,000 + Titan RPG"
+        title: "PORT SOLIS CONTRABAND",
+        district: "PORT SOLIS",
+        objective: "Infiltrate shipping depot and secure armored transport.",
+        target: new THREE.Vector3(-250, 0, -100),
+        reward: "$40,000",
+        wantedReward: 2
       },
       {
         id: 5,
-        title: "Port Solis Contraband",
-        district: "Port Solis",
-        desc: "Locate and hijack the military weapons container truck from Crane Depot 4.",
-        waypoint: { x: 260, z: -300 },
-        reward: "$45,000 + SWAT Armor"
+        title: "CONDOR DOWN",
+        district: "HIGHWAY CORRIDOR",
+        objective: "Shake off airborne CONDOR-1 tactical helicopter.",
+        target: new THREE.Vector3(0, 0, 250),
+        reward: "$55,000",
+        wantedReward: 3
       },
       {
         id: 6,
-        title: "Roadblock Breaker",
-        district: "Highway I-95",
-        desc: "Blast through CPD tactical roadblocks using full nitro boost.",
-        waypoint: { x: 60, z: -160 },
-        reward: "$60,000 + Interceptor Pass"
+        title: "HIGH STAKES INTERCEPT",
+        district: "PALM HEIGHTS",
+        objective: "Ram and neutralize rival courier coupe before safehouse.",
+        target: new THREE.Vector3(-50, 0, 200),
+        reward: "$75,000",
+        wantedReward: 3
       },
       {
         id: 7,
-        title: "Condor Down",
-        district: "Solis Skyline",
-        desc: "Evade the tactical searchlight and disable the CONDOR-1 police helicopter.",
-        waypoint: { x: 240, z: 120 },
-        reward: "$80,000 + Cruiser Unlocked"
+        title: "ROADBLOCK RAMPAGE",
+        district: "CENTRAL EXPRESSWAY",
+        objective: "Smash through 3 tactical CPD roadblocks to deliver intel.",
+        target: new THREE.Vector3(100, 0, 150),
+        reward: "$100,000",
+        wantedReward: 4
       },
       {
         id: 8,
-        title: "The Solis Syndicate Finale",
-        district: "Coral Beach Airstrip",
-        desc: "Eliminate the Syndicate Boss convoy across 6 districts and escape to the airstrip!",
-        waypoint: { x: -460, z: 320 },
-        reward: "$250,000 + Coral Coast Trophy"
+        title: "KING OF SOLIS",
+        district: "SOLIS METROPOLIS",
+        objective: "Survive 4-star CPD onslaught and claim Apex Tower rooftop.",
+        target: new THREE.Vector3(-50, 0, 100),
+        reward: "$500,000 & SOLIS EMPIRE",
+        wantedReward: 4
       }
     ];
 
-    this.initWaypointMarker();
+    this.createWaypointMarker();
+    this.loadMission(0);
   }
 
-  initWaypointMarker() {
-    this.markerGroup = new THREE.Group();
-
-    // Glowing 3D Rotating Beacon Column
-    const colGeo = new THREE.CylinderGeometry(1.8, 1.8, 45, 16, 1, true);
-    const colMat = new THREE.MeshBasicMaterial({
-      color: 0x00f0ff,
+  createWaypointMarker() {
+    // 3D Glowing Vertical Light Column at Mission Waypoint
+    const beaconGeo = new THREE.CylinderGeometry(2.5, 2.5, 30, 16, 1, true);
+    const beaconMat = new THREE.MeshBasicMaterial({
+      color: 0xffcc00,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.5,
       side: THREE.DoubleSide
     });
-    this.markerColumn = new THREE.Mesh(colGeo, colMat);
-    this.markerColumn.position.y = 22.5;
-    this.markerGroup.add(this.markerColumn);
-
-    // Ground Pulse Ring
-    const ringGeo = new THREE.RingGeometry(3.5, 4.5, 32);
-    ringGeo.rotateX(-Math.PI / 2);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: 0xffd200,
-      side: THREE.DoubleSide
-    });
-    this.pulseRing = new THREE.Mesh(ringGeo, ringMat);
-    this.pulseRing.position.y = 0.2;
-    this.markerGroup.add(this.pulseRing);
-
-    this.scene.add(this.markerGroup);
-    this.updateMarkerPosition();
+    this.beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
+    this.beaconMesh.position.y = 15;
+    this.scene.add(this.beaconMesh);
   }
 
-  getCurrentMission() {
-    return this.missions[this.currentIndex];
+  getActiveMission() {
+    return this.missions[this.currentMissionIndex];
   }
 
-  updateMarkerPosition() {
-    const m = this.getCurrentMission();
-    if (m && m.waypoint) {
-      this.markerGroup.position.set(m.waypoint.x, 0, m.waypoint.z);
-      this.markerGroup.visible = true;
-    } else {
-      this.markerGroup.visible = false;
+  loadMission(index) {
+    if (index >= this.missions.length) {
+      index = 0; // Loop or complete
+    }
+    this.currentMissionIndex = index;
+    const m = this.getActiveMission();
+
+    // Position beacon at mission target
+    this.beaconMesh.position.set(m.target.x, 15, m.target.z);
+
+    // Apply wanted level for mission
+    if (this.police && m.wantedReward > 0) {
+      this.police.setWantedLevel(m.wantedReward);
+    }
+
+    // Update HUD Mission Tracker
+    const titleEl = document.getElementById('mission-title');
+    const objEl = document.getElementById('mission-objective');
+    if (titleEl) titleEl.textContent = m.title;
+    if (objEl) objEl.textContent = m.objective;
+
+    // Trigger District Banner
+    this.showDistrictBanner(m.district);
+  }
+
+  showDistrictBanner(name) {
+    const banner = document.getElementById('district-banner');
+    const title = document.getElementById('district-title');
+    if (banner && title) {
+      title.textContent = name;
+      banner.classList.add('show');
+      setTimeout(() => banner.classList.remove('show'), 3500);
     }
   }
 
-  checkObjective(playerPos, playerSpeedKm) {
-    const m = this.getCurrentMission();
-    if (!m) return false;
+  update(playerPos) {
+    const m = this.getActiveMission();
+    const dst = playerPos.distanceTo(m.target);
 
-    const dx = playerPos.x - m.waypoint.x;
-    const dz = playerPos.z - m.waypoint.z;
-    const dist = Math.sqrt(dx * dx + dz * dz);
-
-    if (dist < 18) {
-      if (m.speedTarget && playerSpeedKm < m.speedTarget) {
-        return false; // Must reach speed threshold
-      }
-      return true; // Checkpoint reached
+    // Update distance readout
+    const distEl = document.getElementById('mission-distance');
+    if (distEl) {
+      distEl.textContent = `OBJECTIVE: ${Math.round(dst)}m`;
     }
-    return false;
-  }
 
-  advanceMission() {
-    if (this.currentIndex < this.missions.length - 1) {
-      this.currentIndex++;
-      this.updateMarkerPosition();
-      return true;
-    } else {
-      this.completed = true;
-      return false;
+    // Checkpoint Trigger
+    if (dst < 12.0) {
+      this.completeMission();
     }
   }
 
-  update(time) {
-    if (this.markerGroup.visible) {
-      this.markerColumn.rotation.y = time * 1.5;
-      const s = 1.0 + Math.sin(time * 3.5) * 0.25;
-      this.pulseRing.scale.set(s, 1, s);
-    }
+  completeMission() {
+    const completed = this.getActiveMission();
+    this.hud.showNotification(`MISSION ACCOMPLISHED: ${completed.title} (${completed.reward})`);
+    this.loadMission(this.currentMissionIndex + 1);
   }
 }

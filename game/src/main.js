@@ -1,142 +1,116 @@
-// Main Game Engine Orchestration for SOLIS CITY: CORAL COAST
-// Coordinates Three.js render loop, physics simulation, player controller,
-// CPD AI pursuit system, weapons combat, 8-mission campaign, HUD, and Web Audio.
+// SOLIS CITY: CORAL COAST - Three.js WebGL Engine Core & Render Loop
+// Orchestrates City, Vehicles, Player, Police AI, Combat Arsenal, Story Missions, and AAA HUD.
 
 import { City } from './city.js';
-import { Vehicle } from './vehicles.js';
+import { VehicleManager } from './vehicles.js';
 import { Player } from './player.js';
-import { PoliceSystem } from './police.js';
+import { PoliceManager } from './police.js';
 import { CombatSystem } from './combat.js';
-import { MissionSystem } from './missions.js';
+import { MissionManager } from './missions.js';
 import { HUD } from './hud.js';
-import { AudioSystem } from './audio.js';
+import { AudioManager } from './audio.js';
 
-class Game {
+const THREE = window.THREE;
+
+class SolisEngine {
   constructor() {
-    this.container = document.getElementById('webgl-container');
+    this.canvas = document.getElementById('webgl-canvas');
+    this.isPaused = false;
+    this.clock = new THREE.Clock();
+
     this.input = {
       forward: false,
       backward: false,
       left: false,
       right: false,
-      sprint: false,
       handbrake: false,
-      nitro: false
+      mouseAim: new THREE.Vector2(),
+      isShooting: false
     };
 
-    this.clock = new THREE.Clock();
+    this.initRenderer();
     this.initScene();
-    this.initEntities();
-    this.initInputListeners();
-    this.handleQueryParams();
-
-    window.addEventListener('resize', () => this.onWindowResize());
-    this.animate();
+    this.initSubsystems();
+    this.bindEvents();
+    this.startLoop();
   }
 
-  initScene() {
-    // 1. Scene & Coastal Atmosphere Fog
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x111624);
-    this.scene.fog = new THREE.FogExp2(0x14182b, 0.0022);
-
-    // 2. Camera Setup
-    const aspect = window.innerWidth / window.innerHeight;
-    this.camera = new THREE.PerspectiveCamera(68, aspect, 0.2, 1200);
-    this.camera.position.set(-280, 8, 25);
-
-    // 3. WebGL Renderer
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  initRenderer() {
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
+      antialias: true,
+      powerPreference: 'high-performance'
+    });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.15;
-    this.container.appendChild(this.renderer.domElement);
+  }
 
-    // 4. Lighting Environment (Twilight Coral Sunset)
-    const ambient = new THREE.AmbientLight(0x2a3048, 1.2);
-    this.scene.add(ambient);
+  initScene() {
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x0e1726); // Twilight Coastal Blue
+    this.scene.fog = new THREE.FogExp2(0x0e1726, 0.0035);
 
-    const hemiLight = new THREE.HemisphereLight(0x00f0ff, 0xff2a85, 0.6);
+    this.camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.5, 1200);
+    this.camera.position.set(100, 10, 20);
+
+    // Dynamic Sunset Golden-Hour Sun
+    this.sun = new THREE.DirectionalLight(0xffaa55, 2.2);
+    this.sun.position.set(120, 140, 80);
+    this.sun.castShadow = true;
+    this.sun.shadow.mapSize.width = 2048;
+    this.sun.shadow.mapSize.height = 2048;
+    this.sun.shadow.camera.near = 10;
+    this.sun.shadow.camera.far = 400;
+    this.sun.shadow.camera.left = -160;
+    this.sun.shadow.camera.right = 160;
+    this.sun.shadow.camera.top = 160;
+    this.sun.shadow.camera.bottom = -160;
+    this.scene.add(this.sun);
+
+    // Coastal Hemisphere Ambient
+    const hemiLight = new THREE.HemisphereLight(0xffcc88, 0x112244, 0.9);
     this.scene.add(hemiLight);
-
-    const sun = new THREE.DirectionalLight(0xffaa55, 2.2);
-    sun.position.set(-300, 150, -200);
-    sun.castShadow = true;
-    sun.shadow.mapSize.width = 2048;
-    sun.shadow.mapSize.height = 2048;
-    sun.shadow.camera.near = 10;
-    sun.shadow.camera.far = 600;
-    const d = 120;
-    sun.shadow.camera.left = -d;
-    sun.shadow.camera.right = d;
-    sun.shadow.camera.top = d;
-    sun.shadow.camera.bottom = -d;
-    this.scene.add(sun);
   }
 
-  initEntities() {
-    // City Environment
+  initSubsystems() {
+    this.audio = new AudioManager();
     this.city = new City(this.scene);
-
-    // Player Supercar (Veloce GTS Turbo)
-    this.supercar = new Vehicle(this.scene, "supercar");
-    this.supercar.position.set(-280, 0, 0);
-
-    // Player Character & Camera
-    this.player = new Player(this.scene, this.camera);
-    this.player.enterVehicle(this.supercar);
-
-    // Police Pursuit AI System
-    this.police = new PoliceSystem(this.scene, this.city);
-
-    // Arsenal & Ballistics Combat
-    this.combat = new CombatSystem(this.scene, this.camera);
-
-    // 8-Mission Story Campaign
-    this.missions = new MissionSystem(this.scene);
-
-    // HUD & Vector Minimap
+    this.vehicleManager = new VehicleManager(this.scene, this.city);
+    this.player = new Player(this.scene, this.camera, this.vehicleManager);
+    this.police = new PoliceManager(this.scene, this.city, this.vehicleManager);
+    this.combat = new CombatSystem(this.scene, this.camera, this.audio);
     this.hud = new HUD();
-
-    // Procedural Audio Engine
-    this.audio = new AudioSystem();
+    this.missions = new MissionManager(this.scene, this.hud, this.police);
   }
 
-  initInputListeners() {
+  bindEvents() {
+    window.addEventListener('resize', () => {
+      this.camera.aspect = window.innerWidth / window.innerHeight;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
     window.addEventListener('keydown', (e) => {
-      this.audio.init();
+      if (this.audio) this.audio.resume();
 
       switch (e.code) {
         case 'KeyW': case 'ArrowUp': this.input.forward = true; break;
         case 'KeyS': case 'ArrowDown': this.input.backward = true; break;
         case 'KeyA': case 'ArrowLeft': this.input.left = true; break;
         case 'KeyD': case 'ArrowRight': this.input.right = true; break;
-        case 'ShiftLeft': case 'ShiftRight':
-          this.input.sprint = true;
-          this.input.nitro = true;
-          if (this.player.inVehicle && this.supercar.speed > 5) this.audio.playNitro();
-          break;
         case 'Space': this.input.handbrake = true; break;
-        case 'KeyF':
-          if (this.player.inVehicle) {
-            this.player.exitVehicle();
-          } else {
-            const dx = this.player.position.x - this.supercar.position.x;
-            const dz = this.player.position.z - this.supercar.position.z;
-            if (Math.sqrt(dx * dx + dz * dz) < 6) {
-              this.player.enterVehicle(this.supercar);
-            }
-          }
-          break;
+        case 'KeyE': this.player.toggleVehicle(); break;
+        case 'KeyR': this.combat.reload(); break;
         case 'Digit1': this.combat.selectWeapon(0); break;
         case 'Digit2': this.combat.selectWeapon(1); break;
         case 'Digit3': this.combat.selectWeapon(2); break;
         case 'Digit4': this.combat.selectWeapon(3); break;
         case 'Digit5': this.combat.selectWeapon(4); break;
-        case 'KeyR': this.combat.reload(); break;
+        case 'Escape': this.togglePause(); break;
       }
     });
 
@@ -146,103 +120,74 @@ class Game {
         case 'KeyS': case 'ArrowDown': this.input.backward = false; break;
         case 'KeyA': case 'ArrowLeft': this.input.left = false; break;
         case 'KeyD': case 'ArrowRight': this.input.right = false; break;
-        case 'ShiftLeft': case 'ShiftRight':
-          this.input.sprint = false;
-          this.input.nitro = false;
-          break;
         case 'Space': this.input.handbrake = false; break;
       }
     });
 
     window.addEventListener('mousedown', (e) => {
-      this.audio.init();
-      if (e.button === 0) {
-        const origin = this.player.inVehicle ? this.supercar.position.clone().add(new THREE.Vector3(0, 1.2, 0)) : this.player.position.clone().add(new THREE.Vector3(0, 1.4, 0));
-        this.combat.shoot(origin, this.police, this.audio);
+      if (e.button === 0 && !this.isPaused) {
+        if (this.audio) this.audio.resume();
+        const origin = this.player.pos.clone().add(new THREE.Vector3(0, 1.4, 0));
+        const forward = new THREE.Vector3(
+          Math.sin(this.player.rotY),
+          0,
+          Math.cos(this.player.rotY)
+        );
+        this.combat.shoot(origin, forward, this.police.cruisers);
       }
     });
 
-    window.addEventListener('mousemove', (e) => {
-      if (!this.player.inVehicle) {
-        this.player.camYaw -= e.movementX * 0.003;
-      }
-    });
-  }
-
-  handleQueryParams() {
-    const params = new URLSearchParams(window.location.search);
-    const shot = params.get('shot');
-
-    if (shot === 'chase') {
-      this.supercar.position.set(-280, 0, 40);
-      this.supercar.speed = 52; // ~185 km/h
-      this.police.wantedLevel = 3;
-      this.police.cruisers[0].position.set(-280, 0, 15);
-      this.police.cruisers[1].position.set(-275, 0, -5);
-    } else if (shot === 'combat') {
-      this.player.exitVehicle();
-      this.player.position.set(120, 0, 80);
-      this.combat.selectWeapon(2); // Carbine
-      this.police.wantedLevel = 4;
-    } else if (shot === 'map') {
-      this.camera.position.set(0, 380, 10);
-      this.camera.lookAt(0, 0, 0);
+    const resumeBtn = document.getElementById('resume-btn');
+    if (resumeBtn) {
+      resumeBtn.addEventListener('click', () => this.togglePause());
     }
   }
 
-  onWindowResize() {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-
-  animate() {
-    requestAnimationFrame(() => this.animate());
-
-    const dt = Math.min(this.clock.getDelta(), 0.06);
-    const time = this.clock.getElapsedTime();
-
-    // 1. Vehicle & Player Simulation
-    if (this.player.inVehicle) {
-      this.supercar.updatePhysics(dt, this.input, this.city);
-    }
-    this.player.update(dt, this.input, this.city);
-
-    // 2. City Procedural Animation
-    this.city.update(time);
-
-    // 3. Tactical CPD Police Pursuit AI
-    const playerTargetPos = this.player.inVehicle ? this.supercar.position : this.player.position;
-    this.police.update(dt, playerTargetPos, this.player.inVehicle ? this.supercar : null);
-
-    // 4. Weapons & Particle Systems
-    this.combat.update(dt);
-
-    // 5. Mission Objectives Logic
-    const speedKm = Math.abs(this.supercar.speed) * 3.6;
-    if (this.missions.checkObjective(playerTargetPos, speedKm)) {
-      const advanced = this.missions.advanceMission();
-      const modal = document.getElementById('modal-overlay');
-      if (modal) {
-        modal.style.display = 'flex';
-        document.getElementById('modal-desc').innerText = `You completed: ${this.missions.missions[this.missions.currentIndex - 1].title}! Reward deposited.`;
+  togglePause() {
+    this.isPaused = !this.isPaused;
+    const modal = document.getElementById('pause-menu');
+    if (modal) {
+      if (this.isPaused) {
+        modal.classList.add('active');
+      } else {
+        modal.classList.remove('active');
       }
     }
-    this.missions.update(time);
+  }
 
-    // 6. Audio Engine Parameter Updates
-    const speedRatio = Math.abs(this.supercar.speed) / this.supercar.maxSpeed;
-    this.audio.updateEngine(speedRatio, this.player.inVehicle);
+  startLoop() {
+    const loop = () => {
+      requestAnimationFrame(loop);
+      if (!this.isPaused) {
+        const delta = Math.min(this.clock.getDelta(), 0.1);
+        const time = this.clock.getElapsedTime();
 
-    // 7. AAA HUD & Vector Minimap Render
-    this.hud.update(this.player, this.supercar, this.combat, this.police, this.missions, this.city);
+        // Subsystems Tick
+        this.city.update(delta, time);
+        this.vehicleManager.update(delta, time, this.input);
+        this.player.update(this.input, delta);
+        this.police.update(delta, time, this.player.pos);
+        this.combat.update(delta);
+        this.missions.update(this.player.pos);
 
-    // 8. Render Scene
-    this.renderer.render(this.scene, this.camera);
+        // Update Radar & HUD
+        const activeMission = this.missions.getActiveMission();
+        this.hud.updateRadar(
+          this.player.pos,
+          this.player.rotY,
+          activeMission ? activeMission.target : null,
+          this.police.cruisers
+        );
+        this.hud.updateStats(this.vehicleManager.supercar, this.player);
+
+        // Render Scene
+        this.renderer.render(this.scene, this.camera);
+      }
+    };
+    loop();
   }
 }
 
-// Start Game Instance
 window.addEventListener('DOMContentLoaded', () => {
-  window.gameInstance = new Game();
+  new SolisEngine();
 });

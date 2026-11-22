@@ -1,373 +1,416 @@
-// 3D Vehicles System for SOLIS CITY: CORAL COAST
-// Features: Veloce GTS Turbo supercar with active nitro exhausts,
-// CPD Pursuit Cruiser with alternating LED lightbars, and
-// CONDOR-1 Tactical Helicopter with ground searchlight cone.
+// SOLIS CITY: CORAL COAST - High-Fidelity 3D Vehicles & Flight Systems
+// Supercar Veloce GTS Turbo, CPD Police Pursuit Cruisers, Tactical CONDOR-1 Helicopter.
 
-export class Vehicle {
-  constructor(scene, type = "supercar") {
+const THREE = window.THREE;
+
+export class VehicleManager {
+  constructor(scene, city) {
     this.scene = scene;
-    this.type = type;
-    this.mesh = new THREE.Group();
+    this.city = city;
+    this.vehicles = [];
 
-    this.position = this.mesh.position;
-    this.rotation = this.mesh.rotation;
+    // Player Veloce GTS Supercar
+    this.supercar = this.createSupercar(new THREE.Vector3(100, 0, 40));
+    this.vehicles.push(this.supercar);
 
-    this.speed = 0;
-    this.maxSpeed = type === "supercar" ? 68 : 55; // ~245 km/h
-    this.acceleration = type === "supercar" ? 38 : 30;
-    this.braking = 45;
-    this.reverseSpeed = 16;
-    this.steeringAngle = 0;
-    this.turnSpeed = 2.4;
-    this.handbrake = false;
-    this.nitroActive = false;
-    this.nitroFuel = 100;
-
-    this.wheels = [];
-    this.frontWheels = [];
-
-    this.buildModel();
-    this.scene.add(this.mesh);
+    // CPD Tactical Helicopter
+    this.helicopter = this.createHelicopter(new THREE.Vector3(100, 45, 0));
   }
 
-  buildModel() {
-    if (this.type === "supercar") {
-      this.buildSupercar();
-    } else if (this.type === "police") {
-      this.buildPoliceCruiser();
-    } else if (this.type === "helicopter") {
-      this.buildHelicopter();
-    }
-  }
+  createSupercar(pos) {
+    const group = new THREE.Group();
 
-  buildSupercar() {
-    // Veloce GTS Turbo - Exotic Coral Pink / Deep Carbon Supercar
+    // Aerodynamic Chassis Base (Metallic Sunset Orange)
+    const bodyGeo = new THREE.BoxGeometry(2.3, 0.7, 5.0);
     const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0xff1e6d,
+      color: 0xff3b14,
       metalness: 0.85,
       roughness: 0.18,
-      clearcoat: 0.9,
+      clearcoat: 1.0,
       clearcoatRoughness: 0.1
     });
-
-    const carbonMat = new THREE.MeshStandardMaterial({
-      color: 0x11141a,
-      roughness: 0.4,
-      metalness: 0.8
-    });
-
-    const glassMat = new THREE.MeshStandardMaterial({
-      color: 0x050c18,
-      roughness: 0.05,
-      metalness: 0.9,
-      transparent: true,
-      opacity: 0.82
-    });
-
-    // Lower Wedge Chassis
-    const chassisGeo = new THREE.BoxGeometry(2.3, 0.65, 4.8);
-    const chassis = new THREE.Mesh(chassisGeo, bodyMat);
-    chassis.position.y = 0.55;
-    chassis.castShadow = true;
-    this.mesh.add(chassis);
-
-    // Aerodynamic Cockpit Greenhouse
-    const cabinGeo = new THREE.BoxGeometry(1.8, 0.55, 2.4);
-    const cabin = new THREE.Mesh(cabinGeo, glassMat);
-    cabin.position.set(0, 1.05, -0.2);
-    this.mesh.add(cabin);
-
-    // Carbon Rear Wing
-    const wingGeo = new THREE.BoxGeometry(2.4, 0.08, 0.5);
-    const wing = new THREE.Mesh(wingGeo, carbonMat);
-    wing.position.set(0, 1.15, 2.1);
-    this.mesh.add(wing);
-
-    // Dual Headlights
-    const headMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-    [-0.8, 0.8].forEach(x => {
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.12, 0.1), headMat);
-      head.position.set(x, 0.65, -2.4);
-      this.mesh.add(head);
-    });
-
-    // Dual Taillights
-    const tailMat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
-    const tailBar = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.08, 0.1), tailMat);
-    tailBar.position.set(0, 0.68, 2.4);
-    this.mesh.add(tailBar);
-
-    // Wheels
-    this.createWheels(2.2, 3.0, 0.42);
-
-    // Nitro Flame Emitters
-    this.nitroFlames = [];
-    [-0.5, 0.5].forEach(x => {
-      const flameGeo = new THREE.ConeGeometry(0.18, 0.8, 8);
-      flameGeo.rotateX(-Math.PI / 2);
-      const flameMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0 });
-      const flame = new THREE.Mesh(flameGeo, flameMat);
-      flame.position.set(x, 0.4, 2.5);
-      this.mesh.add(flame);
-      this.nitroFlames.push(flame);
-    });
-
-    // Neon Underglow
-    this.underglow = new THREE.PointLight(0x00f0ff, 1.5, 10);
-    this.underglow.position.set(0, 0.2, 0);
-    this.mesh.add(this.underglow);
-  }
-
-  buildPoliceCruiser() {
-    // CPD Tactical Pursuit Cruiser
-    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf5f7fb, metalness: 0.5, roughness: 0.3 });
-    const blackMat = new THREE.MeshStandardMaterial({ color: 0x12151c, metalness: 0.6, roughness: 0.4 });
-    const glassMat = new THREE.MeshStandardMaterial({ color: 0x08101e, roughness: 0.1, transparent: true, opacity: 0.85 });
-
-    // Cruiser Body
-    const bodyGeo = new THREE.BoxGeometry(2.2, 0.75, 4.6);
-    const body = new THREE.Mesh(bodyGeo, blackMat);
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.65;
     body.castShadow = true;
-    this.mesh.add(body);
+    group.add(body);
 
-    // White CPD Doors / Roof Section
-    const roofGeo = new THREE.BoxGeometry(1.9, 0.65, 2.5);
-    const roof = new THREE.Mesh(roofGeo, whiteMat);
-    roof.position.set(0, 1.2, -0.1);
-    this.mesh.add(roof);
+    // Sleek Cockpit Canopy (Tinted Glass)
+    const cabinGeo = new THREE.BoxGeometry(1.8, 0.6, 2.4);
+    const cabinMat = new THREE.MeshStandardMaterial({
+      color: 0x050a14,
+      metalness: 0.95,
+      roughness: 0.05
+    });
+    const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+    cabin.position.set(0, 1.15, -0.2);
+    cabin.castShadow = true;
+    group.add(cabin);
 
-    // Heavy Push Bumper
-    const barGeo = new THREE.BoxGeometry(2.0, 0.4, 0.3);
-    const bar = new THREE.Mesh(barGeo, blackMat);
-    bar.position.set(0, 0.55, -2.4);
-    this.mesh.add(bar);
+    // Front Splitter / Carbon Fiber Diffuser
+    const splitterGeo = new THREE.BoxGeometry(2.4, 0.15, 0.8);
+    const carbonMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6 });
+    const splitter = new THREE.Mesh(splitterGeo, carbonMat);
+    splitter.position.set(0, 0.35, 2.5);
+    group.add(splitter);
 
-    // Tactical Roof Lightbar (Alternating Red / Blue)
-    const lightbarBase = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.1, 0.3), blackMat);
-    lightbarBase.position.set(0, 1.6, -0.1);
-    this.mesh.add(lightbarBase);
+    // High-Downforce Rear Wing
+    const wingBladeGeo = new THREE.BoxGeometry(2.2, 0.1, 0.6);
+    const wingBlade = new THREE.Mesh(wingBladeGeo, carbonMat);
+    wingBlade.position.set(0, 1.45, -2.4);
+    group.add(wingBlade);
 
-    this.redStrobe = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.12, 0.25), new THREE.MeshBasicMaterial({ color: 0xff0022 }));
-    this.redStrobe.position.set(-0.4, 1.62, -0.1);
-    this.mesh.add(this.redStrobe);
+    const wingPillarGeo = new THREE.BoxGeometry(0.12, 0.45, 0.3);
+    const pillarL = new THREE.Mesh(wingPillarGeo, carbonMat);
+    pillarL.position.set(-0.7, 1.2, -2.4);
+    group.add(pillarL);
+    const pillarR = new THREE.Mesh(wingPillarGeo, carbonMat);
+    pillarR.position.set(0.7, 1.2, -2.4);
+    group.add(pillarR);
 
-    this.blueStrobe = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.12, 0.25), new THREE.MeshBasicMaterial({ color: 0x0066ff }));
-    this.blueStrobe.position.set(0.4, 1.62, -0.1);
-    this.mesh.add(this.blueStrobe);
+    // Xenon Headlights (Bright White LEDs)
+    const hlGeo = new THREE.BoxGeometry(0.5, 0.18, 0.2);
+    const hlMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+    const hlL = new THREE.Mesh(hlGeo, hlMat);
+    hlL.position.set(-0.8, 0.7, 2.5);
+    group.add(hlL);
+    const hlR = new THREE.Mesh(hlGeo, hlMat);
+    hlR.position.set(0.8, 0.7, 2.5);
+    group.add(hlR);
 
-    this.sirenLightRed = new THREE.PointLight(0xff0022, 2.0, 20);
-    this.sirenLightRed.position.set(-0.5, 1.8, -0.1);
-    this.mesh.add(this.sirenLightRed);
+    // Continuous Neon Red Taillight Bar
+    const tlGeo = new THREE.BoxGeometry(2.1, 0.12, 0.15);
+    const tlMat = new THREE.MeshBasicMaterial({ color: 0xff0044 });
+    const tl = new THREE.Mesh(tlGeo, tlMat);
+    tl.position.set(0, 0.75, -2.52);
+    group.add(tl);
 
-    this.sirenLightBlue = new THREE.PointLight(0x0066ff, 2.0, 20);
-    this.sirenLightBlue.position.set(0.5, 1.8, -0.1);
-    this.mesh.add(this.sirenLightBlue);
+    // Quad Chrome Exhaust Tips
+    const exhGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.4, 8);
+    const exhMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.9 });
+    for (let e = -0.45; e <= 0.45; e += 0.3) {
+      const tip = new THREE.Mesh(exhGeo, exhMat);
+      tip.rotation.x = Math.PI / 2;
+      tip.position.set(e, 0.38, -2.55);
+      group.add(tip);
+    }
 
-    this.createWheels(2.1, 2.9, 0.44);
+    // 4 Performance Alloy Sports Wheels
+    const wheels = [];
+    const wheelPositions = [
+      { x: -1.15, y: 0.45, z: 1.5 },
+      { x: 1.15, y: 0.45, z: 1.5 },
+      { x: -1.15, y: 0.45, z: -1.5 },
+      { x: 1.15, y: 0.45, z: -1.5 }
+    ];
+
+    const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.4, 16);
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
+    wheelPositions.forEach(wp => {
+      const wheelMesh = new THREE.Mesh(wheelGeo, wheelMat);
+      wheelMesh.rotation.z = Math.PI / 2;
+      wheelMesh.position.set(wp.x, wp.y, wp.z);
+      wheelMesh.castShadow = true;
+      group.add(wheelMesh);
+      wheels.push(wheelMesh);
+    });
+
+    group.position.copy(pos);
+    this.scene.add(group);
+
+    return {
+      type: 'supercar',
+      mesh: group,
+      wheels: wheels,
+      pos: group.position,
+      rotY: 0,
+      velocity: new THREE.Vector3(),
+      speed: 0,
+      maxSpeed: 2.8,        // 160+ MPH dynamic peak
+      acceleration: 0.038,
+      brakeDecel: 0.048,
+      turnSpeed: 0.042,
+      gear: 1,
+      rpm: 0.2,
+      isDrifting: false,
+      skidTimer: 0,
+      health: 100,
+      radius: 2.2
+    };
   }
 
-  buildHelicopter() {
-    // CONDOR-1 Tactical Helicopter
-    const darkMat = new THREE.MeshStandardMaterial({ color: 0x161c24, metalness: 0.8, roughness: 0.3 });
-    const blueMat = new THREE.MeshStandardMaterial({ color: 0x0055ff, metalness: 0.6, roughness: 0.3 });
+  createPoliceCruiser(pos) {
+    const group = new THREE.Group();
 
-    // Fuselage
-    const fuseGeo = new THREE.BoxGeometry(2.4, 2.2, 5.5);
-    const fuse = new THREE.Mesh(fuseGeo, darkMat);
-    fuse.position.y = 1.5;
-    this.mesh.add(fuse);
+    // CPD Interceptor Body (Black and White Police Livery)
+    const bodyGeo = new THREE.BoxGeometry(2.3, 0.8, 5.2);
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0x08080a,
+      metalness: 0.6,
+      roughness: 0.3
+    });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.7;
+    body.castShadow = true;
+    group.add(body);
 
-    // Tail Boom
-    const tailGeo = new THREE.BoxGeometry(0.6, 0.6, 5.0);
-    const tail = new THREE.Mesh(tailGeo, darkMat);
-    tail.position.set(0, 2.0, 4.8);
-    this.mesh.add(tail);
+    // White Police Doors & Roof
+    const roofGeo = new THREE.BoxGeometry(1.9, 0.7, 2.6);
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.4 });
+    const roof = new THREE.Mesh(roofGeo, roofMat);
+    roof.position.set(0, 1.25, -0.2);
+    group.add(roof);
 
-    // Main Rotor Blades
-    this.mainRotor = new THREE.Group();
-    const bladeGeo = new THREE.BoxGeometry(9.0, 0.06, 0.4);
-    const bladeMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
-    const b1 = new THREE.Mesh(bladeGeo, bladeMat);
-    const b2 = new THREE.Mesh(bladeGeo, bladeMat);
-    b2.rotation.y = Math.PI / 2;
-    this.mainRotor.add(b1, b2);
-    this.mainRotor.position.set(0, 2.8, 0);
-    this.mesh.add(this.mainRotor);
+    // Reinforced Steel Ramming Push-Bar
+    const pushbarGeo = new THREE.BoxGeometry(2.2, 0.6, 0.4);
+    const pushbarMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.9 });
+    const pushbar = new THREE.Mesh(pushbarGeo, pushbarMat);
+    pushbar.position.set(0, 0.6, 2.7);
+    group.add(pushbar);
 
-    // Searchlight Cone & Point Light
-    const spotGeo = new THREE.ConeGeometry(8.0, 35, 16, 1, true);
-    spotGeo.rotateX(Math.PI / 2);
-    const spotMat = new THREE.MeshBasicMaterial({
+    // Roof Police Lightbar (Flashing Red and Blue)
+    const barBaseGeo = new THREE.BoxGeometry(1.4, 0.15, 0.4);
+    const barBase = new THREE.Mesh(barBaseGeo, pushbarMat);
+    barBase.position.set(0, 1.68, -0.2);
+    group.add(barBase);
+
+    const blueLightGeo = new THREE.BoxGeometry(0.5, 0.2, 0.35);
+    const blueMat = new THREE.MeshBasicMaterial({ color: 0x0066ff });
+    const blueLight = new THREE.Mesh(blueLightGeo, blueMat);
+    blueLight.position.set(-0.4, 1.76, -0.2);
+    group.add(blueLight);
+
+    const redLightGeo = new THREE.BoxGeometry(0.5, 0.2, 0.35);
+    const redMat = new THREE.MeshBasicMaterial({ color: 0xff0022 });
+    const redLight = new THREE.Mesh(redLightGeo, redMat);
+    redLight.position.set(0.4, 1.76, -0.2);
+    group.add(redLight);
+
+    // Cruiser Wheels
+    const wheels = [];
+    const wheelPositions = [
+      { x: -1.15, y: 0.45, z: 1.6 },
+      { x: 1.15, y: 0.45, z: 1.6 },
+      { x: -1.15, y: 0.45, z: -1.6 },
+      { x: 1.15, y: 0.45, z: -1.6 }
+    ];
+    const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.4, 16);
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
+    wheelPositions.forEach(wp => {
+      const wheelMesh = new THREE.Mesh(wheelGeo, wheelMat);
+      wheelMesh.rotation.z = Math.PI / 2;
+      wheelMesh.position.set(wp.x, wp.y, wp.z);
+      group.add(wheelMesh);
+      wheels.push(wheelMesh);
+    });
+
+    group.position.copy(pos);
+    this.scene.add(group);
+
+    return {
+      type: 'police',
+      mesh: group,
+      pos: group.position,
+      rotY: 0,
+      velocity: new THREE.Vector3(),
+      speed: 0,
+      maxSpeed: 2.1,
+      blueLight: blueLight,
+      redLight: redLight,
+      health: 80,
+      radius: 2.3,
+      aiState: 'patrol',
+      targetPos: new THREE.Vector3()
+    };
+  }
+
+  createHelicopter(pos) {
+    const group = new THREE.Group();
+
+    // Tactical Fuselage (Matte CPD Navy Blue)
+    const bodyGeo = new THREE.BoxGeometry(2.4, 2.2, 7.0);
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0x0c1426,
+      metalness: 0.8,
+      roughness: 0.3
+    });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.castShadow = true;
+    group.add(body);
+
+    // Cockpit Glass Nose
+    const noseGeo = new THREE.ConeGeometry(1.6, 2.6, 8);
+    const noseMat = new THREE.MeshStandardMaterial({ color: 0x050a14, roughness: 0.1 });
+    const nose = new THREE.Mesh(noseGeo, noseMat);
+    nose.rotation.x = Math.PI / 2;
+    nose.position.set(0, -0.1, 4.2);
+    group.add(nose);
+
+    // Tail Boom & Fin
+    const tailGeo = new THREE.BoxGeometry(0.8, 0.8, 6.0);
+    const tail = new THREE.Mesh(tailGeo, bodyMat);
+    tail.position.set(0, 0.6, -5.5);
+    group.add(tail);
+
+    const finGeo = new THREE.BoxGeometry(0.2, 2.0, 1.4);
+    const fin = new THREE.Mesh(finGeo, bodyMat);
+    fin.position.set(0, 1.4, -8.2);
+    group.add(fin);
+
+    // Main Overhead Rotor
+    const rotorShaftGeo = new THREE.CylinderGeometry(0.15, 0.15, 1.0, 8);
+    const shaft = new THREE.Mesh(rotorShaftGeo, bodyMat);
+    shaft.position.set(0, 1.6, 0.5);
+    group.add(shaft);
+
+    const rotorBladeGeo = new THREE.BoxGeometry(11.0, 0.08, 0.7);
+    const rotorMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+    const mainRotor = new THREE.Mesh(rotorBladeGeo, rotorMat);
+    mainRotor.position.set(0, 2.1, 0.5);
+    group.add(mainRotor);
+
+    // Tail Rotor
+    const tailRotorBladeGeo = new THREE.BoxGeometry(0.08, 2.4, 0.3);
+    const tailRotor = new THREE.Mesh(tailRotorBladeGeo, rotorMat);
+    tailRotor.position.set(0.45, 1.4, -8.2);
+    group.add(tailRotor);
+
+    // Landing Skids
+    const skidGeo = new THREE.CylinderGeometry(0.08, 0.08, 5.5, 8);
+    const skidMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.9 });
+    const skidL = new THREE.Mesh(skidGeo, skidMat);
+    skidL.rotation.x = Math.PI / 2;
+    skidL.position.set(-1.4, -1.4, 0);
+    group.add(skidL);
+    const skidR = new THREE.Mesh(skidGeo, skidMat);
+    skidR.rotation.x = Math.PI / 2;
+    skidR.position.set(1.4, -1.4, 0);
+    group.add(skidR);
+
+    // Tactical Airborne Searchlight Cone
+    const coneGeo = new THREE.ConeGeometry(12, 45, 16, 1, true);
+    const coneMat = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.22,
+      opacity: 0.28,
       side: THREE.DoubleSide
     });
-    this.searchlightCone = new THREE.Mesh(spotGeo, spotMat);
-    this.searchlightCone.position.set(0, 0, -18);
-    this.mesh.add(this.searchlightCone);
+    const searchCone = new THREE.Mesh(coneGeo, coneMat);
+    searchCone.position.set(0, -22, 2);
+    group.add(searchCone);
 
-    this.spotLight = new THREE.SpotLight(0xffffff, 5.0, 80, Math.PI / 7, 0.4);
-    this.spotLight.position.set(0, 0.5, 0);
-    this.spotLight.target.position.set(0, -35, -5);
-    this.mesh.add(this.spotLight);
-    this.mesh.add(this.spotLight.target);
+    group.position.copy(pos);
+    this.scene.add(group);
+
+    return {
+      mesh: group,
+      mainRotor: mainRotor,
+      tailRotor: tailRotor,
+      searchCone: searchCone,
+      pos: group.position,
+      altitude: 45,
+      targetPos: new THREE.Vector3(100, 0, 40)
+    };
   }
 
-  createWheels(width, length, radius) {
-    const wheelGeo = new THREE.CylinderGeometry(radius, radius, 0.35, 16);
-    wheelGeo.rotateZ(Math.PI / 2);
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x0a0c10, roughness: 0.9 });
-    const rimMat = new THREE.MeshStandardMaterial({ color: 0x8899aa, metalness: 0.9 });
+  updateSupercarPhysics(input, delta) {
+    const car = this.supercar;
 
-    const xOffsets = [-width / 2, width / 2];
-    const zOffsets = [-length / 2, length / 2];
-
-    zOffsets.forEach((z, zIdx) => {
-      xOffsets.forEach(x => {
-        const wheelPivot = new THREE.Group();
-        wheelPivot.position.set(x, radius, z);
-
-        const tire = new THREE.Mesh(wheelGeo, wheelMat);
-        const rim = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.6, radius * 0.6, 0.36, 10), rimMat);
-        rim.rotateZ(Math.PI / 2);
-
-        wheelPivot.add(tire, rim);
-        this.mesh.add(wheelPivot);
-        this.wheels.push(wheelPivot);
-
-        if (zIdx === 0) {
-          this.frontWheels.push(wheelPivot);
-        }
-      });
-    });
-  }
-
-  updatePhysics(dt, input, city) {
-    if (this.type === "helicopter") return;
-
-    // Driving Controls
-    const throttle = input.forward ? 1 : (input.backward ? -0.6 : 0);
-    const steer = input.left ? 1 : (input.right ? -1 : 0);
-    this.handbrake = input.handbrake || false;
-
-    // Nitro Boost
-    if (input.nitro && this.nitroFuel > 5 && this.speed > 5) {
-      this.nitroActive = true;
-      this.nitroFuel = Math.max(0, this.nitroFuel - dt * 25);
+    // Acceleration & Braking
+    if (input.forward) {
+      car.speed = Math.min(car.maxSpeed, car.speed + car.acceleration);
+    } else if (input.backward) {
+      car.speed = Math.max(-car.maxSpeed * 0.45, car.speed - car.brakeDecel);
     } else {
-      this.nitroActive = false;
-      this.nitroFuel = Math.min(100, this.nitroFuel + dt * 10);
+      // Natural rolling resistance
+      car.speed *= 0.985;
+      if (Math.abs(car.speed) < 0.005) car.speed = 0;
     }
 
-    const currentAccel = (this.nitroActive ? this.acceleration * 1.8 : this.acceleration);
-    const currentMax = (this.nitroActive ? this.maxSpeed * 1.3 : this.maxSpeed);
-
-    // Speed calculation
-    if (throttle > 0) {
-      this.speed = Math.min(currentMax, this.speed + currentAccel * dt);
-    } else if (throttle < 0) {
-      if (this.speed > 0.5) {
-        this.speed = Math.max(0, this.speed - this.braking * dt * 1.4);
-      } else {
-        this.speed = Math.max(-this.reverseSpeed, this.speed - currentAccel * 0.6 * dt);
-      }
-    } else {
-      // Natural rolling friction
-      if (this.speed > 0) this.speed = Math.max(0, this.speed - 12 * dt);
-      else if (this.speed < 0) this.speed = Math.min(0, this.speed + 12 * dt);
-    }
-
-    if (this.handbrake) {
-      this.speed = Math.max(0, this.speed - 35 * dt);
-    }
+    // Handbrake Drifting
+    car.isDrifting = input.handbrake && Math.abs(car.speed) > 0.4;
+    const steerFactor = car.isDrifting ? 1.6 : 1.0;
 
     // Steering
-    const speedRatio = Math.abs(this.speed) / this.maxSpeed;
-    const steerMultiplier = this.handbrake ? 1.6 : (1.0 - speedRatio * 0.45);
-    if (Math.abs(this.speed) > 0.3) {
-      const dir = this.speed >= 0 ? 1 : -1;
-      this.rotation.y += steer * this.turnSpeed * steerMultiplier * dt * dir;
+    if (Math.abs(car.speed) > 0.01) {
+      const dir = car.speed > 0 ? 1 : -1;
+      if (input.left) {
+        car.rotY += car.turnSpeed * steerFactor * dir;
+      }
+      if (input.right) {
+        car.rotY -= car.turnSpeed * steerFactor * dir;
+      }
     }
 
-    // Front wheels visual steer angle
-    this.frontWheels.forEach(w => {
-      w.rotation.y = steer * 0.45;
-    });
+    // Vehicle Heading & Velocity
+    car.velocity.set(
+      Math.sin(car.rotY) * car.speed,
+      0,
+      Math.cos(car.rotY) * car.speed
+    );
 
-    // Wheels rotation
-    this.wheels.forEach(w => {
-      w.rotation.x += (this.speed / 0.4) * dt;
-    });
+    // Apply translation
+    const nextPos = car.pos.clone().add(car.velocity);
 
-    // Calculate motion vector
-    const forwardX = -Math.sin(this.rotation.y);
-    const forwardZ = -Math.cos(this.rotation.y);
-
-    const nextX = this.position.x + forwardX * this.speed * dt;
-    const nextZ = this.position.z + forwardZ * this.speed * dt;
-
-    // Check city building collisions
-    const col = city.checkCollision(nextX, nextZ, 1.8);
-    if (col.hit) {
-      this.speed = -this.speed * 0.35;
-      this.position.x += col.pushX * 1.5;
-      this.position.z += col.pushZ * 1.5;
+    // Building Collision Detection & Rebound
+    const col = this.city.checkCollision(nextPos, car.radius);
+    if (!col) {
+      car.pos.copy(nextPos);
     } else {
-      this.position.x = nextX;
-      this.position.z = nextZ;
+      // Impact rebound & speed dampening
+      car.speed *= -0.4;
+      car.pos.add(new THREE.Vector3(
+        (car.pos.x - col.center.x) * 0.05,
+        0,
+        (car.pos.z - col.center.z) * 0.05
+      ));
     }
 
-    // Keep on ground
-    this.position.y = 0;
+    // Mesh alignment & wheel spinning
+    car.mesh.position.copy(car.pos);
+    car.mesh.rotation.y = car.rotY;
 
-    // Animate Nitro Flames
-    if (this.nitroFlames) {
-      this.nitroFlames.forEach(f => {
-        f.material.opacity = this.nitroActive ? (0.7 + Math.random() * 0.3) : 0;
-        f.scale.set(1, 1 + (this.nitroActive ? Math.random() * 0.8 : 0), 1);
-      });
+    // Dynamic Gear & RPM Calculation
+    const speedMPH = Math.abs(car.speed) * 60;
+    if (speedMPH < 25) {
+      car.gear = 1;
+      car.rpm = speedMPH / 25;
+    } else if (speedMPH < 55) {
+      car.gear = 2;
+      car.rpm = (speedMPH - 25) / 30;
+    } else if (speedMPH < 90) {
+      car.gear = 3;
+      car.rpm = (speedMPH - 55) / 35;
+    } else if (speedMPH < 125) {
+      car.gear = 4;
+      car.rpm = (speedMPH - 90) / 35;
+    } else {
+      car.gear = 5;
+      car.rpm = Math.min(1.0, (speedMPH - 125) / 40);
     }
 
-    // Animate Police Strobes
-    if (this.type === "police") {
-      const strobe = Math.sin(Date.now() * 0.02) > 0;
-      this.redStrobe.material.color.setHex(strobe ? 0xff0022 : 0x220005);
-      this.blueStrobe.material.color.setHex(!strobe ? 0x0066ff : 0x000822);
-      this.sirenLightRed.intensity = strobe ? 2.5 : 0.1;
-      this.sirenLightBlue.intensity = !strobe ? 2.5 : 0.1;
-    }
+    // Spin wheels
+    car.wheels.forEach(w => {
+      w.rotation.x += car.speed * 0.8;
+    });
   }
 
-  updateHelicopter(dt, targetPos) {
-    if (this.type !== "helicopter") return;
+  update(delta, time, input) {
+    this.updateSupercarPhysics(input, delta);
 
-    // Spin Rotor
-    if (this.mainRotor) {
-      this.mainRotor.rotation.y += dt * 32;
-    }
+    // Helicopter Rotor Animation & Tracking
+    if (this.helicopter) {
+      this.helicopter.mainRotor.rotation.y += 0.45;
+      this.helicopter.tailRotor.rotation.x += 0.55;
 
-    // Smooth aerial chase logic (maintains 35m altitude)
-    const targetY = 32;
-    this.position.y += (targetY - this.position.y) * 2.0 * dt;
+      // Track target with smooth searchlight hover
+      const target = this.helicopter.targetPos;
+      const hpos = this.helicopter.pos;
+      hpos.x += (target.x - hpos.x) * 0.015;
+      hpos.z += (target.z - hpos.z) * 0.015;
+      hpos.y = this.helicopter.altitude + Math.sin(time * 2) * 1.5;
 
-    const dx = targetPos.x - this.position.x;
-    const dz = targetPos.z - this.position.z;
-    const dist = Math.sqrt(dx * dx + dz * dz);
-
-    if (dist > 15) {
-      const angle = Math.atan2(dx, dz);
-      this.rotation.y += (angle - this.rotation.y) * 3.0 * dt;
-      this.position.x += (dx / dist) * 24 * dt;
-      this.position.z += (dz / dist) * 24 * dt;
-      // Banking tilt
-      this.rotation.z = Math.max(-0.25, Math.min(0.25, -dx * 0.01));
-    }
-
-    // Point Searchlight at target
-    if (this.spotLight) {
-      this.spotLight.target.position.set(targetPos.x, 0, targetPos.z);
+      // Searchlight points towards target
+      this.helicopter.mesh.lookAt(target.x, hpos.y, target.z);
     }
   }
 }
