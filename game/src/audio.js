@@ -1,174 +1,185 @@
-// Procedural Web Audio API Sound Synthesizer for Solis City: Coral Coast
-// Synthesizes supercar engine hum, CPD police wailing sirens, gunshots, explosions, and synthwave radio.
+// SOLIS CITY: CORAL COAST - Web Audio API Sound Synthesizer
+// 100% self-contained mathematical procedural audio synthesis:
+// supercar engine rumble & RPM pitch shift, nitro boost hiss,
+// dual-tone CPD police sirens, 5-tier weapon gunshots, and explosive booms.
 
-function createAudioEngine() {
-  let ctx = null;
-  let masterGain = null;
-  let engineOsc = null;
-  let engineGain = null;
-  let engineFilter = null;
-  let isSoundEnabled = true;
+export class AudioManager {
+  constructor() {
+    this.ctx = null;
+    this.isMuted = false;
 
-  function initContext() {
-    if (!ctx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      ctx = new AudioCtx();
-      masterGain = ctx.createGain();
-      masterGain.gain.setValueAtTime(0.4, ctx.currentTime);
-      masterGain.connect(ctx.destination);
+    // Supercar engine sound nodes
+    this.engineOsc1 = null;
+    this.engineOsc2 = null;
+    this.engineFilter = null;
+    this.engineGain = null;
 
-      // Supercar engine oscillator setup
-      engineOsc = ctx.createOscillator();
-      engineOsc.type = 'sawtooth';
-      engineFilter = ctx.createBiquadFilter();
-      engineFilter.type = 'lowpass';
-      engineFilter.frequency.setValueAtTime(320, ctx.currentTime);
-
-      engineGain = ctx.createGain();
-      engineGain.gain.setValueAtTime(0.08, ctx.currentTime);
-
-      engineOsc.connect(engineFilter);
-      engineFilter.connect(engineGain);
-      engineGain.connect(masterGain);
-      engineOsc.start();
-    }
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
+    // Police siren nodes
+    this.sirenOsc = null;
+    this.sirenGain = null;
+    this.isSirenPlaying = false;
   }
 
-  const audio = {
-    init: initContext,
+  init() {
+    if (this.ctx) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
 
-    toggleSound: function () {
-      isSoundEnabled = !isSoundEnabled;
-      if (masterGain && ctx) {
-        masterGain.gain.setValueAtTime(isSoundEnabled ? 0.4 : 0.0, ctx.currentTime);
-      }
-      return isSoundEnabled;
-    },
+    this.ctx = new AudioContext();
+    this.initEngineAudio();
+  }
 
-    // Modulate engine pitch & volume with car speed
-    updateEngine: function (speed, inVehicle) {
-      if (!ctx || !engineOsc || !isSoundEnabled) return;
-      if (!inVehicle) {
-        engineGain.gain.setValueAtTime(0.01, ctx.currentTime);
-        return;
-      }
-      const absSpeed = Math.abs(speed);
-      const targetFreq = 48 + absSpeed * 4.2;
-      const targetCutoff = 280 + absSpeed * 22;
+  initEngineAudio() {
+    if (!this.ctx) return;
 
-      engineOsc.frequency.setTargetAtTime(targetFreq, ctx.currentTime, 0.08);
-      engineFilter.frequency.setTargetAtTime(targetCutoff, ctx.currentTime, 0.08);
-      engineGain.gain.setTargetAtTime(0.12 + Math.min(0.2, absSpeed * 0.003), ctx.currentTime, 0.08);
-    },
+    // Dual-oscillator engine synthesis with lowpass filter
+    this.engineOsc1 = this.ctx.createOscillator();
+    this.engineOsc1.type = 'sawtooth';
+    this.engineOsc1.frequency.value = 55; // Idle rumble
 
-    // Synthesize Gunshots
-    playGunshot: function (wepName) {
-      if (!ctx || !isSoundEnabled) return;
-      initContext();
+    this.engineOsc2 = this.ctx.createOscillator();
+    this.engineOsc2.type = 'triangle';
+    this.engineOsc2.frequency.value = 110;
 
-      // White Noise Burst
-      const bufferSize = ctx.sampleRate * 0.12;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.22));
-      }
+    this.engineFilter = this.ctx.createBiquadFilter();
+    this.engineFilter.type = 'lowpass';
+    this.engineFilter.frequency.value = 400;
 
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
+    this.engineGain = this.ctx.createGain();
+    this.engineGain.gain.value = 0.15;
 
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(wepName === 'HEAVY SNIPER' ? 600 : 1200, ctx.currentTime);
+    this.engineOsc1.connect(this.engineFilter);
+    this.engineOsc2.connect(this.engineFilter);
+    this.engineFilter.connect(this.engineGain);
+    this.engineGain.connect(this.ctx.destination);
 
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.5, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    this.engineOsc1.start();
+    this.engineOsc2.start();
+  }
 
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(masterGain);
-      noise.start();
+  updateEngine(speed, maxSpeed, isNitro) {
+    if (!this.ctx || this.isMuted || !this.engineOsc1) return;
 
-      // Punchy Sub Kick
-      const subOsc = ctx.createOscillator();
-      subOsc.type = 'sine';
-      subOsc.frequency.setValueAtTime(140, ctx.currentTime);
-      subOsc.frequency.exponentialRampToValueAtTime(35, ctx.currentTime + 0.08);
+    const ratio = Math.min(1.0, Math.abs(speed) / maxSpeed);
+    const baseFreq = 55 + ratio * 320 + (isNitro ? 60 : 0);
 
-      const subGain = ctx.createGain();
-      subGain.gain.setValueAtTime(0.6, ctx.currentTime);
-      subGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+    const now = this.ctx.currentTime;
+    this.engineOsc1.frequency.setTargetAtTime(baseFreq, now, 0.08);
+    this.engineOsc2.frequency.setTargetAtTime(baseFreq * 1.5, now, 0.08);
 
-      subOsc.connect(subGain);
-      subGain.connect(masterGain);
-      subOsc.start();
-      subOsc.stop(ctx.currentTime + 0.09);
-    },
+    const filterFreq = 350 + ratio * 1400;
+    this.engineFilter.frequency.setTargetAtTime(filterFreq, now, 0.08);
+  }
 
-    // Synthesize Collision / Crash
-    playCrash: function () {
-      if (!ctx || !isSoundEnabled) return;
-      initContext();
+  startSiren() {
+    if (!this.ctx || this.isMuted || this.isSirenPlaying) return;
+    this.isSirenPlaying = true;
 
-      const bufferSize = ctx.sampleRate * 0.35;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
-      }
+    this.sirenOsc = this.ctx.createOscillator();
+    this.sirenOsc.type = 'sawtooth';
 
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
+    // Wailing frequency modulation
+    const lfo = this.ctx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 0.8; // Wailing speed
 
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(450, ctx.currentTime);
+    const lfoGain = this.ctx.createGain();
+    lfoGain.gain.value = 350; // Sweep range
 
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.7, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.35);
+    this.sirenOsc.frequency.value = 750;
+    lfo.connect(this.sirenOsc.frequency);
 
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(masterGain);
-      noise.start();
-    },
+    this.sirenGain = this.ctx.createGain();
+    this.sirenGain.gain.value = 0.12;
 
-    // Synthesize Heavy Explosion
-    playExplosion: function () {
-      if (!ctx || !isSoundEnabled) return;
-      initContext();
+    this.sirenOsc.connect(this.sirenGain);
+    this.sirenGain.connect(this.ctx.destination);
 
-      const bufferSize = ctx.sampleRate * 0.7;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
-      }
+    this.sirenOsc.start();
+    lfo.start();
+  }
 
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(300, ctx.currentTime);
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.85, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(masterGain);
-      noise.start();
+  stopSiren() {
+    if (!this.isSirenPlaying) return;
+    if (this.sirenGain) {
+      this.sirenGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.2);
     }
-  };
+    this.isSirenPlaying = false;
+  }
 
-  return audio;
+  playGunshot(weaponName) {
+    if (!this.ctx || this.isMuted) return;
+
+    // Procedural punchy gun crack via white noise burst + kick envelope
+    const bufferSize = this.ctx.sampleRate * 0.15;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.035));
+    }
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = weaponName.includes('M4A1') ? 1800 : 2200;
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    noise.start();
+  }
+
+  playRpgLaunch() {
+    if (!this.ctx || this.isMuted) return;
+
+    const osc = this.ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(450, this.ctx.currentTime + 0.35);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.4);
+  }
+
+  playExplosion() {
+    if (!this.ctx || this.isMuted) return;
+
+    // Sub-bass thump + noise wash
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.6);
+
+    const oscGain = this.ctx.createGain();
+    oscGain.gain.setValueAtTime(0.6, this.ctx.currentTime);
+    oscGain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.7);
+
+    osc.connect(oscGain);
+    oscGain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.7);
+  }
+
+  toggleMute() {
+    this.isMuted = !this.isMuted;
+    if (this.engineGain) {
+      this.engineGain.gain.value = this.isMuted ? 0 : 0.15;
+    }
+    return this.isMuted;
+  }
 }
-
-window.soundFX = createAudioEngine();

@@ -1,213 +1,195 @@
-// Mission Progression & Story Campaign System for Solis City: Coral Coast
-// Includes: 8 Story Missions, 6 Coastal Districts Standing, Objective Markers, and Voice Dialogue.
+// SOLIS CITY: CORAL COAST - 8 Story Missions Across 6 Districts
+// Manages mission progression, objectives, waypoints, radio transmissions,
+// and district narrative milestones.
 
-function createMissionSystem(scene) {
-  const missions = [
-    {
-      id: 1,
-      district: 'Coral Beach',
-      name: 'WELCOME TO SOLIS',
-      tag: 'MISSION 1 / 8',
-      objective: 'Drive south along Ocean Boulevard and meet Marco at Coral Pier.',
-      targetPos: new THREE.Vector3(-80, 0, 180),
-      wantedOnStart: 1,
-      dialogue: {
-        speaker: 'MARCO',
-        text: 'Welcome to Solis, kid. Keep your eyes on the road and stay clear of CPD cruisers.'
-      },
-      reward: 25000
-    },
-    {
-      id: 2,
-      district: 'Neon Strip',
-      name: 'NEON SHADOWS',
-      tag: 'MISSION 2 / 8',
-      objective: 'Infiltrate Vice Palms club at the Neon Strip and retrieve the encrypted briefcase.',
-      targetPos: new THREE.Vector3(40, 0, 100),
-      wantedOnStart: 2,
-      dialogue: {
-        speaker: 'VALERIA',
-        text: 'The briefcase is guarded by the Mendoza syndicate. Hit fast and disappear in the traffic.'
-      },
-      reward: 45000
-    },
-    {
-      id: 3,
-      district: 'Palm Bay',
-      name: 'HIGHWAY EXPRESS',
-      tag: 'MISSION 3 / 8',
-      objective: 'Deliver the high-grade prototype across Palm Avenue to the northern safehouse.',
-      targetPos: new THREE.Vector3(0, 0, -200),
-      wantedOnStart: 2,
-      dialogue: {
-        speaker: 'MARCO',
-        text: 'Pedal to the metal! The buyer is waiting at the north terminal. Don’t total the ride!'
-      },
-      reward: 60000
-    },
-    {
-      id: 4,
-      district: 'Downtown',
-      name: 'HEATWAVE',
-      tag: 'MISSION 4 / 8',
-      objective: 'Steal the CPD Tactical Cruiser parked outside the Downtown Precinct.',
-      targetPos: new THREE.Vector3(80, 0, -50),
-      wantedOnStart: 3,
-      dialogue: {
-        speaker: 'VALERIA',
-        text: 'Every cop in Solis is going to hunt you down once you crack that siren. Get ready!'
-      },
-      reward: 85000
-    },
-    {
-      id: 5,
-      district: 'Marina Bay',
-      name: 'CONDOR DOWN',
-      tag: 'MISSION 5 / 8',
-      objective: 'Survive the 4-star CPD manhunt and shoot down the CONDOR-1 surveillance helicopter.',
-      targetPos: new THREE.Vector3(-40, 0, -150),
-      wantedOnStart: 4,
-      dialogue: {
-        speaker: 'DISPATCH',
-        text: 'AIR 1 TO COMMAND: WE HAVE VISUAL ON THE CORAL BOULEVARD SUSPECT! ENGAGING!'
-      },
-      reward: 120000
-    },
-    {
-      id: 6,
-      district: 'Port Horizon',
-      name: 'CARTEL SHIPMENT',
-      tag: 'MISSION 6 / 8',
-      objective: 'Intercept and secure the contraband boat shipment docked at Port Horizon.',
-      targetPos: new THREE.Vector3(160, 0, 200),
-      wantedOnStart: 3,
-      dialogue: {
-        speaker: 'MARCO',
-        text: 'Port security is bought and paid for, but the cartel won’t give up the cargo without a fight.'
-      },
-      reward: 150000
-    },
-    {
-      id: 7,
-      district: 'Downtown Core',
-      name: 'TOWER HEIST',
-      tag: 'MISSION 7 / 8',
-      objective: 'Infiltrate Solis Financial Tower and breach the executive vault on the 40th floor.',
-      targetPos: new THREE.Vector3(40, 0, -50),
-      wantedOnStart: 4,
-      dialogue: {
-        speaker: 'VALERIA',
-        text: 'This is the big one. Fifty million in bearer bonds. Alarms will trigger instantly!'
-      },
-      reward: 350000
-    },
-    {
-      id: 8,
-      district: 'Coral Coastline',
-      name: 'KING OF THE COAST',
-      tag: 'MISSION 8 / 8',
-      objective: 'Outrun the CPD elite taskforce along the coastal freeway and take Solis City!',
-      targetPos: new THREE.Vector3(-80, 0, -180),
-      wantedOnStart: 4,
-      dialogue: {
-        speaker: 'MARCO',
-        text: 'You own this city now! Light up the nitrous and leave the badges in the dust!'
-      },
-      reward: 1000000
+export const STORY_MISSIONS = [
+  {
+    id: 1,
+    title: 'CORAL WELCOME',
+    act: 'ACT I · OPERATION CORAL',
+    district: 'CORAL MARINA',
+    objective: 'Meet contact Esteban at Marina Pier 4 and evade local patrol',
+    waypoint: { x: -90, z: 200 },
+    wantedOnStart: 1,
+    dialogue: {
+      speaker: 'ESTEBAN (RADIO)',
+      text: '"Welcome to Solis City, kid. Grab the wheels at Pier 4 before the local precinct gets curious."'
     }
-  ];
-
-  // Waypoint Marker Mesh in 3D Scene
-  const markerGroup = new THREE.Group();
-  const markerGeo = new THREE.ConeGeometry(2.5, 5.0, 4);
-  const markerMat = new THREE.MeshBasicMaterial({
-    color: 0xffaa00,
-    wireframe: true
-  });
-  const markerMesh = new THREE.Mesh(markerGeo, markerMat);
-  markerMesh.rotation.x = Math.PI; // Pointing down
-  markerMesh.position.y = 4.5;
-  markerGroup.add(markerMesh);
-
-  // Glowing ground ring
-  const ringGeo = new THREE.RingGeometry(3.0, 3.8, 16);
-  const ringMat = new THREE.MeshBasicMaterial({
-    color: 0xffcc00,
-    side: THREE.DoubleSide,
-    transparent: true,
-    opacity: 0.7
-  });
-  const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-  ringMesh.rotation.x = -Math.PI / 2;
-  ringMesh.position.y = 0.55;
-  markerGroup.add(ringMesh);
-
-  scene.add(markerGroup);
-
-  const missionState = {
-    missions: missions,
-    currentIndex: 0,
-    marker: markerGroup,
-    districts: [
-      { name: 'Downtown', standing: 85 },
-      { name: 'Coral Beach', standing: 92 },
-      { name: 'Port Horizon', standing: 64 },
-      { name: 'Neon Strip', standing: 78 },
-      { name: 'Palm Bay', standing: 88 },
-      { name: 'Marina Bay', standing: 70 }
-    ]
-  };
-
-  missionState.getCurrentMission = function () {
-    return missions[missionState.currentIndex];
-  };
-
-  missionState.startMission = function (index, policeSystem) {
-    if (index >= 0 && index < missions.length) {
-      missionState.currentIndex = index;
+  },
+  {
+    id: 2,
+    title: 'NEON HIGHWAY',
+    act: 'ACT I · OPERATION CORAL',
+    district: 'OCEAN DRIVE',
+    objective: 'Sprint down the coastal expressway to the Palm Club under 90s',
+    waypoint: { x: -90, z: -200 },
+    wantedOnStart: 1,
+    dialogue: {
+      speaker: 'ESTEBAN (RADIO)',
+      text: '"Floor it down Ocean Drive! Keep it above 120 MPH and shake any tail on the promenade."'
     }
-    const current = missionState.getCurrentMission();
-    markerGroup.position.copy(current.targetPos);
+  },
+  {
+    id: 3,
+    title: 'ASSET SEIZURE',
+    act: 'ACT II · THE UNDERBELLY',
+    district: 'DOWNTOWN',
+    objective: 'Infiltrate Horizon Bank plaza and secure the encrypted drive',
+    waypoint: { x: 45, z: 80 },
+    wantedOnStart: 2,
+    dialogue: {
+      speaker: 'VALERIA (DISPATCH)',
+      text: '"Horizon Bank security is alerted. Grab the drive from the courtyard vault and punch your way out!"'
+    }
+  },
+  {
+    id: 4,
+    title: 'HARBOR AMBUSH',
+    act: 'ACT II · THE UNDERBELLY',
+    district: 'INDUSTRIAL HARBOR',
+    objective: 'Survive syndicate ambush at the cargo container shipyard',
+    waypoint: { x: 210, z: 180 },
+    wantedOnStart: 2,
+    dialogue: {
+      speaker: 'VALERIA (DISPATCH)',
+      text: '"It is a setup at the docks! Syndicate enforcers are boxing you in with shipping containers!"'
+    }
+  },
+  {
+    id: 5,
+    title: 'SKYLINE HEIST',
+    act: 'ACT III · HIGH STAKES',
+    district: 'DOWNTOWN',
+    objective: 'Steal prototype Veloce GTS Turbo from penthouse garage',
+    waypoint: { x: 45, z: 0 },
+    wantedOnStart: 3,
+    dialogue: {
+      speaker: 'ESTEBAN (RADIO)',
+      text: '"The Veloce GTS Turbo is the fastest machine in Coral Coast. Once you grab it, CPD tactical is on code red!"'
+    }
+  },
+  {
+    id: 6,
+    title: 'CONDOR DOWN',
+    act: 'ACT III · HIGH STAKES',
+    district: 'NEON PALMS',
+    objective: 'Survive 4-star manhunt and evade CONDOR-1 tactical helicopter',
+    waypoint: { x: 0, z: -200 },
+    wantedOnStart: 4,
+    dialogue: {
+      speaker: 'CPD DISPATCH',
+      text: '"AIR-1 CONDOR HAS EYES ON SUSPECT! ALL GROUND UNITS ENGAGE WITH MAXIMUM FORCE!"'
+    }
+  },
+  {
+    id: 7,
+    title: 'COASTLINE DELIVERY',
+    act: 'ACT IV · ENDGAME',
+    district: 'SUNSET HEIGHTS',
+    objective: 'Break through tactical CPD roadblocks across the Metro bridge',
+    waypoint: { x: 180, z: -80 },
+    wantedOnStart: 3,
+    dialogue: {
+      speaker: 'VALERIA (RADIO)',
+      text: '"They have locked down the bridge with cruisers and spike strips! Ram through or find an alleyway!"'
+    }
+  },
+  {
+    id: 8,
+    title: 'APEX PREDATOR',
+    act: 'ACT IV · ENDGAME',
+    district: 'OCEAN DRIVE',
+    objective: 'Final showdown at Sunset Pier - eliminate syndicate boss and escape',
+    waypoint: { x: -90, z: -280 },
+    wantedOnStart: 4,
+    dialogue: {
+      speaker: 'ESTEBAN (RADIO)',
+      text: '"This is the finish line. Take down the syndicate convoy at Sunset Pier and Solis City is ours!"'
+    }
+  }
+];
 
-    if (policeSystem) {
-      policeSystem.setWantedLevel(current.wantedOnStart);
+export class MissionManager {
+  constructor(game) {
+    this.game = game;
+    this.currentMissionIndex = 4; // Start at iconic Mission 5: SKYLINE HEIST
+    this.state = 'active'; // 'active', 'completed', 'failed'
+    this.missionTimer = 0;
+    this.dialogueTimer = 0;
+    this.isDialogueActive = false;
+  }
+
+  getCurrentMission() {
+    return STORY_MISSIONS[this.currentMissionIndex];
+  }
+
+  startMission(index) {
+    if (index >= 0 && index < STORY_MISSIONS.length) {
+      this.currentMissionIndex = index;
+      this.state = 'active';
+      this.missionTimer = 0;
+
+      const m = this.getCurrentMission();
+      this.showDialogue(m.dialogue.speaker, m.dialogue.text);
+
+      if (this.game && this.game.police) {
+        this.game.police.setWantedLevel(m.wantedOnStart);
+      }
+    }
+  }
+
+  showDialogue(speaker, text, duration = 6.0) {
+    this.isDialogueActive = true;
+    this.dialogueTimer = duration;
+
+    const banner = document.getElementById('hud-dialogue');
+    const spkEl = document.getElementById('hud-speaker');
+    const txtEl = document.getElementById('hud-dialogue-text');
+
+    if (banner && spkEl && txtEl) {
+      spkEl.textContent = speaker;
+      txtEl.textContent = text;
+      banner.classList.add('active');
+    }
+  }
+
+  update(dt, playerPos) {
+    if (this.state !== 'active') return;
+
+    this.missionTimer += dt;
+
+    // Subtitle dialogue timer
+    if (this.isDialogueActive) {
+      this.dialogueTimer -= dt;
+      if (this.dialogueTimer <= 0) {
+        this.isDialogueActive = false;
+        const banner = document.getElementById('hud-dialogue');
+        if (banner) banner.classList.remove('active');
+      }
     }
 
-    // Trigger dialogue
-    const dialogueBox = document.getElementById('dialogue-box');
-    const dialogueSpeaker = document.getElementById('dialogue-speaker');
-    const dialogueText = document.getElementById('dialogue-text');
-    if (dialogueBox && dialogueSpeaker && dialogueText) {
-      dialogueSpeaker.innerText = current.dialogue.speaker;
-      dialogueText.innerText = current.dialogue.text;
-      dialogueBox.classList.add('active');
-      setTimeout(() => dialogueBox.classList.remove('active'), 5500);
+    // Check waypoint arrival
+    const m = this.getCurrentMission();
+    const distToWaypoint = Math.hypot(playerPos.x - m.waypoint.x, playerPos.z - m.waypoint.z);
+
+    if (distToWaypoint < 12.0) {
+      this.completeMission();
     }
-  };
+  }
 
-  missionState.nextMission = function (policeSystem, player) {
-    const current = missionState.getCurrentMission();
-    player.cash += current.reward;
+  completeMission() {
+    this.state = 'completed';
+    const m = this.getCurrentMission();
+    this.showDialogue('SYSTEM', `★ MISSION PASSED: ${m.title}! +$25,000 REWARD`);
 
-    missionState.currentIndex = (missionState.currentIndex + 1) % missions.length;
-    missionState.startMission(missionState.currentIndex, policeSystem);
-  };
-
-  missionState.update = function (dt, player, policeSystem) {
-    // Spin and bounce waypoint marker
-    markerGroup.rotation.y += 1.8 * dt;
-    markerGroup.position.y = Math.sin(performance.now() / 300) * 0.6;
-
-    // Check distance to objective
-    const current = missionState.getCurrentMission();
-    const dist = player.position.distanceTo(current.targetPos);
-    if (dist < 6.5) {
-      // Completed current objective!
-      missionState.nextMission(policeSystem, player);
+    if (this.game && this.game.player) {
+      this.game.player.cash += 25000;
     }
-  };
 
-  return missionState;
+    // Advance to next mission after delay
+    setTimeout(() => {
+      const nextIdx = (this.currentMissionIndex + 1) % STORY_MISSIONS.length;
+      this.startMission(nextIdx);
+    }, 4500);
+  }
 }
-
-window.createMissionSystem = createMissionSystem;

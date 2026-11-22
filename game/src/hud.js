@@ -1,211 +1,262 @@
-// AAA Radar Minimap & Full HUD System for Solis City: Coral Coast
-// Handles: Circular Canvas Radar, GPS Waypoint Route, Wanted Stars, Speedometer, Cash & Vitals.
+// SOLIS CITY: CORAL COAST - Dynamic HUD & Radar GPS Canvas
+// High-fidelity vector radar minimap, GPS navigation route overlay,
+// wanted stars animator, speedometer gauge, and vitals status renderer.
 
-function createHUD(radarCanvas) {
-  const ctx = radarCanvas.getContext('2d');
-  const radarW = radarCanvas.width;
-  const radarH = radarCanvas.height;
-  const radarRadius = radarW / 2;
+export class HUD {
+  constructor(game) {
+    this.game = game;
 
-  const hud = {
-    radarCanvas: radarCanvas,
-    ctx: ctx
-  };
+    // Radar Canvas
+    this.canvas = document.getElementById('radar-canvas');
+    this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
 
-  // Render Minimap Radar Canvas
-  hud.renderRadar = function (player, policeSystem, currentMission) {
-    ctx.clearRect(0, 0, radarW, radarH);
+    // DOM Elements Cache
+    this.elMissionTitle = document.getElementById('hud-mission-title');
+    this.elObjectiveText = document.getElementById('hud-objective-text');
+    this.elDispatch = document.getElementById('hud-dispatch');
+    this.elDispatchText = document.getElementById('hud-dispatch-text');
+    this.elStarsContainer = document.getElementById('hud-stars');
+    this.elWeaponName = document.getElementById('hud-weapon-name');
+    this.elAmmoClip = document.getElementById('hud-ammo-clip');
+    this.elAmmoReserve = document.getElementById('hud-ammo-reserve');
+    this.elHealthBar = document.getElementById('hud-health-bar');
+    this.elArmourBar = document.getElementById('hud-armour-bar');
+    this.elSpeed = document.getElementById('hud-speed');
+    this.elGear = document.getElementById('hud-gear');
+    this.elNitroBar = document.getElementById('hud-nitro-bar');
+    this.elDistrict = document.getElementById('hud-district');
+  }
 
-    // 1. Circular Clip
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(radarRadius, radarRadius, radarRadius - 4, 0, Math.PI * 2);
-    ctx.clip();
+  update(dt, time) {
+    this.updateVitals();
+    this.updateWeapon();
+    this.updateVehicle();
+    this.updateMissions();
+    this.updatePolice();
+    this.renderRadar();
+  }
 
-    // Dark Background & Grid
-    ctx.fillStyle = '#0a0d18';
-    ctx.fillRect(0, 0, radarW, radarH);
+  updateVitals() {
+    if (!this.game.player) return;
+    const p = this.game.player;
 
-    ctx.strokeStyle = 'rgba(0, 180, 255, 0.08)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < radarW; x += 20) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, radarH);
-      ctx.stroke();
+    if (this.elHealthBar) {
+      const hpPercent = Math.max(0, Math.min(100, (p.health / p.maxHealth) * 100));
+      this.elHealthBar.style.width = `${hpPercent}%`;
     }
-    for (let y = 0; y < radarH; y += 20) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(radarW, y);
-      ctx.stroke();
+    if (this.elArmourBar) {
+      const armPercent = Math.max(0, Math.min(100, (p.armour / p.maxArmour) * 100));
+      this.elArmourBar.style.width = `${armPercent}%`;
+    }
+  }
+
+  updateWeapon() {
+    if (!this.game.combat) return;
+    const w = this.game.combat.getCurrentWeapon();
+
+    if (this.elWeaponName) this.elWeaponName.textContent = w.name;
+    if (this.elAmmoClip) this.elAmmoClip.textContent = w.mag === 1 ? '—' : w.currentMag;
+    if (this.elAmmoReserve) this.elAmmoReserve.textContent = w.reserveAmmo;
+  }
+
+  updateVehicle() {
+    if (!this.game.supercar) return;
+    const car = this.game.supercar;
+
+    if (this.elSpeed) this.elSpeed.textContent = car.getSpeedMph();
+    if (this.elGear) this.elGear.textContent = `GEAR ${car.getGear()}`;
+    if (this.elNitroBar) {
+      const nitroPercent = (car.nitro / car.nitroMax) * 100;
+      this.elNitroBar.style.width = `${nitroPercent}%`;
+    }
+  }
+
+  updateMissions() {
+    if (!this.game.missions) return;
+    const m = this.game.missions.getCurrentMission();
+
+    if (this.elMissionTitle && m) this.elMissionTitle.textContent = m.title;
+    if (this.elObjectiveText && m) this.elObjectiveText.textContent = m.objective;
+    if (this.elDistrict && m) this.elDistrict.textContent = m.district;
+  }
+
+  updatePolice() {
+    if (!this.game.police) return;
+    const wanted = this.game.police.wantedLevel;
+
+    // Update wanted stars
+    if (this.elStarsContainer) {
+      const stars = this.elStarsContainer.children;
+      for (let i = 0; i < stars.length; i++) {
+        if (i < wanted) {
+          stars[i].classList.add('active');
+        } else {
+          stars[i].classList.remove('active');
+        }
+      }
     }
 
-    // Map World coordinate conversion to Radar Canvas
-    // Center of radar is player position
-    const scale = 0.45; // pixels per world unit
-    const pX = player.position.x;
-    const pZ = player.position.z;
-    const heading = player.rotation; // Player facing angle
+    // Update police dispatch banner
+    if (this.elDispatch) {
+      if (wanted >= 2) {
+        this.elDispatch.classList.add('active');
+        if (this.elDispatchText) {
+          if (wanted === 4) {
+            this.elDispatchText.textContent = 'CPD TAC-COMM: CONDOR-1 AUTHORIZED FOR DEADLY FORCE';
+          } else if (wanted === 3) {
+            this.elDispatchText.textContent = 'CPD DISPATCH: TACTICAL ROADBLOCKS DEPLOYED ON EXPWY';
+          } else {
+            this.elDispatchText.textContent = 'CPD PATROL: 10-99 IN PURSUIT - SUSPECT SPEEDING';
+          }
+        }
+      } else {
+        this.elDispatch.classList.remove('active');
+      }
+    }
+  }
 
+  renderRadar() {
+    if (!this.ctx || !this.game.player) return;
+
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
+    const scale = 0.55; // World units to radar pixels
+
+    const pPos = this.game.player.position;
+    const pHeading = this.game.player.heading;
+
+    // Clear background
+    ctx.fillStyle = '#060a14';
+    ctx.fillRect(0, 0, w, h);
+
+    // Save context for player-centric rotation
     ctx.save();
-    ctx.translate(radarRadius, radarRadius);
-    ctx.rotate(-heading); // Orient radar to player heading
+    ctx.translate(cx, cy);
+    ctx.rotate(pHeading); // Orient radar forward
 
-    // 2. Draw Ocean on West side (x < -120)
-    const oceanX = (-275 - pX) * scale;
-    const oceanZ = (0 - pZ) * scale;
-    ctx.fillStyle = '#07243d';
-    ctx.fillRect(oceanX - (175 * scale), oceanZ - (300 * scale), 350 * scale, 600 * scale);
+    // Draw ocean boundary
+    ctx.fillStyle = '#0a2540';
+    ctx.fillRect((-160 - pPos.x) * scale, (-500 - pPos.z) * scale, -200 * scale, 1000 * scale);
 
-    // 3. Draw Road Grid
-    const roads = [
-      { x: -80, z: 0, w: 18, l: 560 },
-      { x: 0, z: 0, w: 22, l: 560 },
-      { x: 80, z: 0, w: 20, l: 560 },
-      { x: 160, z: 0, w: 16, l: 560 },
-      { x: 40, z: -200, w: 260, l: 16 },
-      { x: 40, z: -100, w: 260, l: 16 },
-      { x: 40, z: 0, w: 260, l: 18 },
-      { x: 40, z: 100, w: 260, l: 16 },
-      { x: 40, z: 200, w: 260, l: 16 }
-    ];
+    // Draw Road Network Grid
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 9;
 
-    ctx.fillStyle = '#1c2230';
-    roads.forEach(r => {
-      const rx = (r.x - pX) * scale;
-      const rz = (r.z - pZ) * scale;
-      const rw = r.w * scale;
-      const rl = r.l * scale;
-      ctx.fillRect(rx - rw / 2, rz - rl / 2, rw, rl);
+    // Main Avenues
+    [-90, 0, 90, 180].forEach(rx => {
+      ctx.beginPath();
+      ctx.moveTo((rx - pPos.x) * scale, (-320 - pPos.z) * scale);
+      ctx.lineTo((rx - pPos.x) * scale, (320 - pPos.z) * scale);
+      ctx.stroke();
     });
 
-    // 4. Draw GPS Line to Mission Objective
-    if (currentMission && currentMission.targetPos) {
-      const mx = (currentMission.targetPos.x - pX) * scale;
-      const mz = (currentMission.targetPos.z - pZ) * scale;
-
-      ctx.strokeStyle = '#ffaa00';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([4, 4]);
+    // Cross Streets
+    [-240, -160, -80, 0, 80, 160, 240].forEach(rz => {
       ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(mx, mz);
+      ctx.moveTo((-100 - pPos.x) * scale, (rz - pPos.z) * scale);
+      ctx.lineTo((240 - pPos.x) * scale, (rz - pPos.z) * scale);
+      ctx.stroke();
+    });
+
+    // Draw Vector GPS Route Line to current mission waypoint
+    if (this.game.missions) {
+      const targetWp = this.game.missions.getCurrentMission().waypoint;
+      ctx.strokeStyle = '#ff2a6d';
+      ctx.lineWidth = 3.5;
+      ctx.setLineDash([6, 4]);
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0); // from player center
+      // Simple corner waypoint routing
+      const midX = (targetWp.x - pPos.x) * scale;
+      const midZ = 0;
+      ctx.lineTo(midX, midZ);
+      ctx.lineTo((targetWp.x - pPos.x) * scale, (targetWp.z - pPos.z) * scale);
       ctx.stroke();
       ctx.setLineDash([]);
-
-      // Objective Diamond Marker
-      ctx.fillStyle = '#ffcc00';
-      ctx.beginPath();
-      ctx.moveTo(mx, mz - 7);
-      ctx.lineTo(mx + 6, mz);
-      ctx.lineTo(mx, mz + 7);
-      ctx.lineTo(mx - 6, mz);
-      ctx.closePath();
-      ctx.fill();
     }
 
-    // 5. Draw Police Cruisers (Pulsing Red / Blue Blips)
-    const isRedSiren = Math.sin(performance.now() / 80) > 0;
-    policeSystem.activeCruisers.forEach(c => {
-      const cx = (c.position.x - pX) * scale;
-      const cz = (c.position.z - pZ) * scale;
-      ctx.fillStyle = isRedSiren ? '#ff1133' : '#0066ff';
-      ctx.beginPath();
-      ctx.arc(cx, cz, 4.5, 0, Math.PI * 2);
-      ctx.fill();
-    });
+    // Draw Mission Objective Blip
+    if (this.game.missions) {
+      const target = this.game.missions.getCurrentMission().waypoint;
+      const mx = (target.x - pPos.x) * scale;
+      const mz = (target.z - pPos.z) * scale;
 
-    // 6. Draw Police Helicopter (Flashing Star Blip)
-    if (policeSystem.helicopter) {
-      const hx = (policeSystem.helicopter.position.x - pX) * scale;
-      const hz = (policeSystem.helicopter.position.z - pZ) * scale;
-      ctx.fillStyle = '#ff0055';
+      ctx.fillStyle = '#ffb700';
+      ctx.shadowColor = '#ffb700';
+      ctx.shadowBlur = 8;
       ctx.beginPath();
-      ctx.arc(hx, hz, 6.0, 0, Math.PI * 2);
+      ctx.arc(mx, mz, 5.5, 0, Math.PI * 2);
       ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    // Draw Police Cruisers (Flashing Red/Blue Blips)
+    if (this.game.police && this.game.police.cruisers) {
+      this.game.police.cruisers.forEach((c, idx) => {
+        const px = (c.position.x - pPos.x) * scale;
+        const pz = (c.position.z - pPos.z) * scale;
+
+        ctx.fillStyle = (idx % 2 === 0) ? '#ff0033' : '#0088ff';
+        ctx.beginPath();
+        ctx.arc(px, pz, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    // Draw Police Helicopter
+    if (this.game.police && this.game.police.helicopter && this.game.police.helicopter.active) {
+      const hPos = this.game.police.helicopter.position;
+      const hx = (hPos.x - pPos.x) * scale;
+      const hz = (hPos.z - pPos.z) * scale;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(hx, hz, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Rotor blade line on radar
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(hx - 8, hz);
+      ctx.lineTo(hx + 8, hz);
       ctx.stroke();
     }
 
-    ctx.restore(); // Restore radar rotation
+    ctx.restore();
 
-    // 7. Draw Player Cursor in Center of Radar (Pointing Up)
-    ctx.fillStyle = '#00e5ff';
-    ctx.shadowColor = '#00e5ff';
-    ctx.shadowBlur = 8;
+    // Draw Player Arrow at Center (Fixed forward)
+    ctx.fillStyle = '#05d9e8';
+    ctx.shadowColor = '#05d9e8';
+    ctx.shadowBlur = 10;
     ctx.beginPath();
-    ctx.moveTo(radarRadius, radarRadius - 8);
-    ctx.lineTo(radarRadius + 6, radarRadius + 7);
-    ctx.lineTo(radarRadius, radarRadius + 4);
-    ctx.lineTo(radarRadius - 6, radarRadius + 7);
+    ctx.moveTo(cx, cy - 7);
+    ctx.lineTo(cx + 5, cy + 6);
+    ctx.lineTo(cx, cy + 3);
+    ctx.lineTo(cx - 5, cy + 6);
     ctx.closePath();
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    ctx.restore(); // Restore circular clip
-  };
+    // Radar Reticle / Range Ring
+    ctx.strokeStyle = 'rgba(5, 217, 232, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 68, 0, Math.PI * 2);
+    ctx.stroke();
 
-  // Update DOM Elements
-  hud.updateDOM = function (player, policeSystem, combatSystem, currentMission) {
-    // Wanted Stars
-    const starEls = document.querySelectorAll('.wanted-star');
-    starEls.forEach((star, idx) => {
-      if (idx < policeSystem.wantedLevel) {
-        star.classList.add('active');
-      } else {
-        star.classList.remove('active');
-      }
-    });
-
-    // Cash Display
-    const cashEl = document.getElementById('hud-cash');
-    if (cashEl) {
-      cashEl.innerText = '$' + player.cash.toLocaleString();
-    }
-
-    // Weapon & Ammo
-    const wep = combatSystem.getCurrentWeapon();
-    const wepNameEl = document.getElementById('hud-weapon-name');
-    const ammoEl = document.getElementById('hud-ammo');
-    if (wepNameEl) wepNameEl.innerText = wep.name;
-    if (ammoEl) ammoEl.innerText = `${wep.ammo} / ${wep.maxAmmo}`;
-
-    // Health & Armour Bars
-    const healthFill = document.getElementById('health-fill');
-    const armourFill = document.getElementById('armour-fill');
-    if (healthFill) healthFill.style.width = `${Math.max(0, (player.health / player.maxHealth) * 100)}%`;
-    if (armourFill) armourFill.style.width = `${Math.max(0, (player.armour / player.maxArmour) * 100)}%`;
-
-    // Speedometer & Vehicle HUD
-    const speedVal = document.getElementById('speed-value');
-    const gearDisplay = document.getElementById('gear-display');
-    const carNameEl = document.getElementById('car-name');
-    if (player.inVehicle && player.vehicle) {
-      const uData = player.vehicle.userData;
-      const kmh = Math.round(Math.abs(uData.speed) * 3.6);
-      if (speedVal) speedVal.innerText = kmh;
-      if (gearDisplay) gearDisplay.innerText = `GEAR ${uData.gear}`;
-      if (carNameEl) carNameEl.innerText = uData.name.toUpperCase();
-    } else {
-      if (speedVal) speedVal.innerText = '0';
-      if (gearDisplay) gearDisplay.innerText = 'ON FOOT';
-      if (carNameEl) carNameEl.innerText = 'PEDESTRIAN';
-    }
-
-    // Mission Tracker
-    if (currentMission) {
-      const tagEl = document.getElementById('mission-tag');
-      const nameEl = document.getElementById('mission-name');
-      const objEl = document.getElementById('mission-objective');
-      if (tagEl) tagEl.innerText = currentMission.tag;
-      if (nameEl) nameEl.innerText = currentMission.name;
-      if (objEl) objEl.innerText = currentMission.objective;
-    }
-  };
-
-  return hud;
+    // North Compass Tick
+    const northAngle = pHeading;
+    const nx = cx + Math.sin(northAngle) * 72;
+    const ny = cy - Math.cos(northAngle) * 72;
+    ctx.fillStyle = '#ff2a6d';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('N', nx, ny);
+  }
 }
-
-window.createHUD = createHUD;

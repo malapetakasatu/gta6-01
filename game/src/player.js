@@ -1,263 +1,189 @@
-// Player Controller, Camera, and Vitals System for Solis City: Coral Coast
-// Handles: On-foot pedestrian movement, supercar driving, 3rd person dynamic chase cam, health & armor.
+// SOLIS CITY: CORAL COAST - Player Controller & Chase Camera
+// Handles player states, driving & on-foot physics, 3rd-person chase camera,
+// dynamic FOV, health/armour vitals, and input bindings.
 
-function createPlayer(scene) {
-  const player = {
-    // State
-    inVehicle: true,
-    vehicle: null,
-    position: new THREE.Vector3(-80, 0.5, -180),
-    rotation: 0, // Yaw in radians
-    velocity: new THREE.Vector3(),
-    onFootSpeed: 10,
-    sprintSpeed: 18,
-    isSprinting: false,
+/* global THREE */
 
-    // Health & Armour
-    health: 100,
-    maxHealth: 100,
-    armour: 100,
-    maxArmour: 100,
-    cash: 1450200,
+export class Player {
+  constructor(scene, camera, supercar) {
+    this.scene = scene;
+    this.camera = camera;
+    this.supercar = supercar;
 
-    // Meshes
-    characterMesh: null,
-    cameraPivot: new THREE.Group(),
-    cameraOffset: new THREE.Vector3(0, 2.8, -6.5),
-    lookTarget: new THREE.Vector3()
-  };
+    // State: 'driving' or 'onfoot'
+    this.state = 'driving';
 
-  // 1. Procedural Pedestrian Model (Used when player exits vehicle)
-  const charGroup = new THREE.Group();
+    // Vitals
+    this.health = 100;
+    this.maxHealth = 100;
+    this.armour = 100;
+    this.maxArmour = 100;
+    this.stamina = 100;
+    this.cash = 84500;
+    this.wantedLevel = 3; // Start in intense 3-star pursuit
 
-  // Torso / Jacket
-  const jacketGeo = new THREE.BoxGeometry(0.7, 0.9, 0.4);
-  const jacketMat = new THREE.MeshStandardMaterial({ color: 0x1c2b39, roughness: 0.7 });
-  const torso = new THREE.Mesh(jacketGeo, jacketMat);
-  torso.position.y = 1.35;
-  torso.castShadow = true;
-  charGroup.add(torso);
+    // On-foot character avatar
+    this.position = new THREE.Vector3(0, 0, 0);
+    this.heading = 0;
+    this.characterMesh = null;
+    this.buildCharacterMesh();
 
-  // Head
-  const headGeo = new THREE.BoxGeometry(0.35, 0.4, 0.35);
-  const skinMat = new THREE.MeshStandardMaterial({ color: 0xdcb897, roughness: 0.6 });
-  const head = new THREE.Mesh(headGeo, skinMat);
-  head.position.y = 2.05;
-  charGroup.add(head);
+    // Camera chase settings
+    this.cameraOffset = new THREE.Vector3(0, 3.2, -6.8);
+    this.cameraTarget = new THREE.Vector3();
+    this.baseFov = 65;
+    this.currentFov = 65;
 
-  // Legs / Jeans
-  const jeansMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.8 });
-  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.9, 0.32), jeansMat);
-  legL.position.set(-0.2, 0.5, 0);
-  legL.castShadow = true;
-  charGroup.add(legL);
+    // Mouse look offset
+    this.mouseYaw = 0;
+    this.mousePitch = 0.2;
+  }
 
-  const legR = legL.clone();
-  legR.position.x = 0.2;
-  charGroup.add(legR);
+  buildCharacterMesh() {
+    // Stylized modern protagonist character
+    this.characterMesh = new THREE.Group();
 
-  // Weapon in hand
-  const gunGeo = new THREE.BoxGeometry(0.12, 0.2, 0.65);
-  const gunMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8 });
-  const gunMesh = new THREE.Mesh(gunGeo, gunMat);
-  gunMesh.position.set(0.42, 1.25, 0.3);
-  charGroup.add(gunMesh);
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xd4a373, roughness: 0.8 });
+    const jacketMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 }); // Dark Tactical Jacket
+    const pantsMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 });
 
-  charGroup.position.copy(player.position);
-  charGroup.visible = false; // Starts in vehicle
-  scene.add(charGroup);
-  player.characterMesh = charGroup;
+    // Torso
+    const torsoGeo = new THREE.BoxGeometry(0.7, 0.9, 0.4);
+    const torso = new THREE.Mesh(torsoGeo, jacketMat);
+    torso.position.y = 1.35;
+    torso.castShadow = true;
+    this.characterMesh.add(torso);
 
-  // 2. Setup Supercar as Player's Starting Ride
-  const supercar = window.createSupercar();
-  supercar.position.set(-80, 0, -180);
-  scene.add(supercar);
-  player.vehicle = supercar;
+    // Head
+    const headGeo = new THREE.SphereGeometry(0.24, 12, 12);
+    const head = new THREE.Mesh(headGeo, skinMat);
+    head.position.y = 2.05;
+    this.characterMesh.add(head);
 
-  // 3. Update Camera and Physics Logic
-  player.update = function (dt, keys, camera, cityBuildings) {
-    if (player.inVehicle && player.vehicle) {
-      // VEHICLE DRIVING CONTROLS
-      const car = player.vehicle;
-      const uData = car.userData;
+    // Legs
+    const legGeo = new THREE.BoxGeometry(0.28, 0.9, 0.3);
+    const legL = new THREE.Mesh(legGeo, pantsMat);
+    legL.position.set(-0.2, 0.45, 0);
+    this.characterMesh.add(legL);
 
-      let accelerate = 0;
-      let steer = 0;
+    const legR = new THREE.Mesh(legGeo, pantsMat);
+    legR.position.set(0.2, 0.45, 0);
+    this.characterMesh.add(legR);
 
-      if (keys['KeyW'] || keys['ArrowUp']) accelerate += 1;
-      if (keys['KeyS'] || keys['ArrowDown']) accelerate -= 1;
-      if (keys['KeyA'] || keys['ArrowLeft']) steer += 1;
-      if (keys['KeyD'] || keys['ArrowRight']) steer -= 1;
-      const handbrake = keys['Space'];
+    this.characterMesh.visible = (this.state === 'onfoot');
+    this.scene.add(this.characterMesh);
+  }
 
-      // Acceleration / Braking
-      if (accelerate > 0) {
-        uData.speed = Math.min(uData.speed + uData.acceleration * dt, uData.maxSpeed);
-      } else if (accelerate < 0) {
-        uData.speed = Math.max(uData.speed - uData.braking * dt, -uData.reverseSpeed);
-      } else {
-        // Natural deceleration / friction
-        if (uData.speed > 0) {
-          uData.speed = Math.max(0, uData.speed - 12 * dt);
-        } else if (uData.speed < 0) {
-          uData.speed = Math.min(0, uData.speed + 12 * dt);
-        }
-      }
+  update(dt, input, city) {
+    if (this.state === 'driving') {
+      // Vehicle driving mode
+      this.supercar.update(dt, input, city);
+      this.position.copy(this.supercar.position);
+      this.heading = this.supercar.heading;
 
-      if (handbrake) {
-        uData.speed *= Math.max(0, 1 - 2.8 * dt);
-      }
+      // Update chase camera behind vehicle
+      const speedRatio = Math.abs(this.supercar.speed) / this.supercar.maxSpeed;
 
-      // Steering
-      if (Math.abs(uData.speed) > 0.5) {
-        const steerDir = uData.speed >= 0 ? 1 : -1;
-        car.rotation.y += steer * uData.handling * steerDir * dt;
-      }
+      // Dynamic FOV expands with speed & nitro
+      const targetFov = this.baseFov + speedRatio * 18 + (this.supercar.isNitroActive ? 12 : 0);
+      this.currentFov += (targetFov - this.currentFov) * 5 * dt;
+      this.camera.fov = this.currentFov;
+      this.camera.updateProjectionMatrix();
 
-      // Calculate forward motion
-      const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), car.rotation.y);
-      const moveStep = forward.multiplyScalar(uData.speed * dt);
-      const newPos = car.position.clone().add(moveStep);
+      // Camera position calculations
+      const chaseDist = 7.2 + speedRatio * 2.2;
+      const chaseHeight = 3.2 + speedRatio * 0.5;
 
-      // Simple Building Collision
-      let collided = false;
-      const carRadius = 2.0;
-      for (let i = 0; i < cityBuildings.length; i++) {
-        const b = cityBuildings[i];
-        if (
-          newPos.x > b.minX - carRadius &&
-          newPos.x < b.maxX + carRadius &&
-          newPos.z > b.minZ - carRadius &&
-          newPos.z < b.maxZ + carRadius
-        ) {
-          collided = true;
-          uData.speed *= -0.3; // Bounce back
-          if (window.soundFX && Math.abs(uData.speed) > 8) {
-            window.soundFX.playCrash();
-          }
-          break;
-        }
-      }
+      const camX = this.supercar.position.x - Math.sin(this.heading) * chaseDist;
+      const camZ = this.supercar.position.z - Math.cos(this.heading) * chaseDist;
+      const camY = this.supercar.position.y + chaseHeight;
 
-      if (!collided) {
-        car.position.copy(newPos);
-      }
+      const targetCamPos = new THREE.Vector3(camX, camY, camZ);
+      this.camera.position.lerp(targetCamPos, dt * 10);
 
-      // Rotate wheels with speed
-      if (uData.wheels) {
-        uData.wheels.forEach(w => {
-          w.rotation.x += (uData.speed / 1.5) * dt;
-        });
-      }
-
-      // Calculate gear for HUD
-      const kmh = Math.round(Math.abs(uData.speed) * 3.6);
-      if (kmh < 40) uData.gear = 1;
-      else if (kmh < 85) uData.gear = 2;
-      else if (kmh < 135) uData.gear = 3;
-      else if (kmh < 190) uData.gear = 4;
-      else if (kmh < 240) uData.gear = 5;
-      else uData.gear = 6;
-
-      player.position.copy(car.position);
-      player.rotation = car.rotation.y;
-
-      // Dynamic Chase Camera
-      const camDist = 7.5 + Math.abs(uData.speed) * 0.04;
-      const camHeight = 3.2 + Math.abs(uData.speed) * 0.01;
-      const backDir = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), car.rotation.y);
-      const targetCamPos = car.position.clone().add(backDir.multiplyScalar(camDist));
-      targetCamPos.y = car.position.y + camHeight;
-
-      camera.position.lerp(targetCamPos, 0.12);
-      player.lookTarget.copy(car.position).add(new THREE.Vector3(0, 1.2, 0));
-      camera.lookAt(player.lookTarget);
+      // Look slightly ahead of car
+      const lookLead = 4.0;
+      this.cameraTarget.set(
+        this.supercar.position.x + Math.sin(this.heading) * lookLead,
+        this.supercar.position.y + 1.2,
+        this.supercar.position.z + Math.cos(this.heading) * lookLead
+      );
+      this.camera.lookAt(this.cameraTarget);
 
     } else {
-      // ON-FOOT PEDESTRIAN CONTROLS
+      // On-foot mode
       let moveX = 0;
       let moveZ = 0;
-      if (keys['KeyW'] || keys['ArrowUp']) moveZ += 1;
-      if (keys['KeyS'] || keys['ArrowDown']) moveZ -= 1;
-      if (keys['KeyA'] || keys['ArrowLeft']) moveX += 1;
-      if (keys['KeyD'] || keys['ArrowRight']) moveX -= 1;
+      const speed = input.nitro ? 8.5 : 4.5; // Sprint or jog
 
-      const isRunning = keys['ShiftLeft'] || keys['ShiftRight'];
-      const speed = isRunning ? player.sprintSpeed : player.onFootSpeed;
+      if (input.forward) { moveX += Math.sin(this.heading); moveZ += Math.cos(this.heading); }
+      if (input.backward) { moveX -= Math.sin(this.heading); moveZ -= Math.cos(this.heading); }
+      if (input.left) { this.heading += 3.0 * dt; }
+      if (input.right) { this.heading -= 3.0 * dt; }
 
-      if (moveX !== 0 || moveZ !== 0) {
-        const moveVec = new THREE.Vector3(moveX, 0, moveZ).normalize();
-        // Camera-relative orientation
-        player.rotation = Math.atan2(moveVec.x, moveVec.z);
-        player.characterMesh.rotation.y = player.rotation;
+      const nextX = this.position.x + moveX * speed * dt;
+      const nextZ = this.position.z + moveZ * speed * dt;
 
-        const forward = moveVec.multiplyScalar(speed * dt);
-        const newPos = player.position.clone().add(forward);
-
-        // Building check
-        let coll = false;
-        for (let i = 0; i < cityBuildings.length; i++) {
-          const b = cityBuildings[i];
-          if (newPos.x > b.minX - 0.5 && newPos.x < b.maxX + 0.5 &&
-              newPos.z > b.minZ - 0.5 && newPos.z < b.maxZ + 0.5) {
-            coll = true;
-            break;
-          }
+      if (city) {
+        const col = city.checkCollision(nextX, nextZ, 0.6);
+        if (!col.hit) {
+          this.position.x = nextX;
+          this.position.z = nextZ;
         }
-        if (!coll) {
-          player.position.copy(newPos);
-          player.characterMesh.position.copy(newPos);
-        }
+      } else {
+        this.position.x = nextX;
+        this.position.z = nextZ;
       }
 
-      // On-foot 3rd Person Follow Camera
-      const targetCamPos = player.position.clone().add(new THREE.Vector3(0, 3.5, -6.0));
-      camera.position.lerp(targetCamPos, 0.15);
-      player.lookTarget.copy(player.position).add(new THREE.Vector3(0, 1.6, 0));
-      camera.lookAt(player.lookTarget);
-    }
-  };
+      this.characterMesh.position.copy(this.position);
+      this.characterMesh.rotation.y = this.heading;
 
-  // Toggle Enter / Exit Vehicle (F key)
-  player.toggleVehicle = function () {
-    if (player.inVehicle) {
+      // On-foot camera
+      const camX = this.position.x - Math.sin(this.heading) * 4.0;
+      const camZ = this.position.z - Math.cos(this.heading) * 4.0;
+      const camY = this.position.y + 2.4;
+
+      this.camera.position.lerp(new THREE.Vector3(camX, camY, camZ), dt * 10);
+      this.camera.lookAt(this.position.x, this.position.y + 1.6, this.position.z);
+    }
+  }
+
+  toggleVehicle() {
+    if (this.state === 'driving') {
       // Exit vehicle to the left
-      player.inVehicle = false;
-      player.characterMesh.visible = true;
-      const leftOffset = new THREE.Vector3(-2.2, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.vehicle.rotation.y);
-      player.position.copy(player.vehicle.position).add(leftOffset);
-      player.characterMesh.position.copy(player.position);
+      this.state = 'onfoot';
+      this.position.set(
+        this.supercar.position.x - Math.cos(this.supercar.heading) * 2.2,
+        0,
+        this.supercar.position.z + Math.sin(this.supercar.heading) * 2.2
+      );
+      this.characterMesh.position.copy(this.position);
+      this.characterMesh.visible = true;
     } else {
-      // Check distance to vehicle
-      const dist = player.position.distanceTo(player.vehicle.position);
-      if (dist < 5.5) {
-        player.inVehicle = true;
-        player.characterMesh.visible = false;
+      // Enter vehicle if close enough
+      const d = this.position.distanceTo(this.supercar.position);
+      if (d < 4.5) {
+        this.state = 'driving';
+        this.characterMesh.visible = false;
       }
     }
-  };
+  }
 
-  player.takeDamage = function (amount) {
-    if (player.armour > 0) {
-      const armDamage = Math.min(player.armour, amount);
-      player.armour -= armDamage;
-      amount -= armDamage;
+  takeDamage(amount) {
+    if (this.armour > 0) {
+      const absorbed = Math.min(this.armour, amount);
+      this.armour -= absorbed;
+      amount -= absorbed;
     }
-    player.health = Math.max(0, player.health - amount);
-    if (player.health <= 0) {
-      // Wasted respawn
-      player.health = 100;
-      player.armour = 50;
-      player.position.set(-80, 0.5, -180);
-      if (player.vehicle) {
-        player.vehicle.position.set(-80, 0, -180);
-        player.vehicle.userData.speed = 0;
-      }
-      if (window.soundFX) window.soundFX.playCrash();
+    if (amount > 0) {
+      this.health = Math.max(0, this.health - amount);
     }
-  };
 
-  return player;
+    // Trigger visual screen damage flash
+    const flashElem = document.getElementById('damage-flash');
+    if (flashElem) {
+      flashElem.style.opacity = '1';
+      setTimeout(() => { flashElem.style.opacity = '0'; }, 160);
+    }
+  }
 }
-
-window.createPlayer = createPlayer;
