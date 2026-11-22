@@ -9,6 +9,7 @@ import { CombatSystem } from './combat.js';
 import { MissionManager } from './missions.js';
 import { HUD } from './hud.js';
 import { AudioManager } from './audio.js';
+import { stageScene } from './staging.js';
 
 const THREE = window.THREE;
 
@@ -32,6 +33,14 @@ class SolisEngine {
     this.initScene();
     this.initSubsystems();
     this.bindEvents();
+
+    const params = new URLSearchParams(window.location.search);
+    const shot = params.get('shot');
+    if (shot) {
+      this.isStaged = true;
+      stageScene(this, shot);
+    }
+
     this.startLoop();
   }
 
@@ -181,6 +190,8 @@ class SolisEngine {
         this.hud.updateStats(this.vehicleManager.supercar, this.player);
 
         // Render Scene
+        this.renderer.render(this.scene, this.camera);
+      } else if (this.isStaged) {
         this.renderer.render(this.scene, this.camera);
       }
     };

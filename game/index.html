@@ -518,6 +518,100 @@
       transform: scale(1.04);
       box-shadow: 0 6px 22px rgba(255, 0, 85, 0.6);
     }
+
+    /* TITLE SCREEN PRESENTATION */
+    #title-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 48px 40px 36px;
+      box-sizing: border-box;
+      background: radial-gradient(circle at center, rgba(10, 16, 28, 0.15) 0%, rgba(5, 8, 16, 0.8) 100%);
+      pointer-events: none;
+      z-index: 100;
+    }
+    #title-screen.hidden {
+      display: none;
+    }
+    .title-logo-box {
+      text-align: center;
+    }
+    .title-gta {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 10px;
+      text-transform: uppercase;
+      color: #ff3366;
+      text-shadow: 0 0 16px rgba(255, 51, 102, 0.8);
+      margin-bottom: 2px;
+    }
+    .title-vi {
+      font-size: 84px;
+      font-weight: 900;
+      line-height: 0.9;
+      letter-spacing: 6px;
+      background: linear-gradient(180deg, #ffffff 20%, #ff88a3 60%, #ff0055 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 24px rgba(255, 0, 85, 0.7));
+    }
+    .title-sub {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 5px;
+      color: #00f0ff;
+      text-shadow: 0 0 14px rgba(0, 240, 255, 0.8);
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+    .title-sub span {
+      color: #ffcc00;
+    }
+    .title-menu-box {
+      background: rgba(8, 12, 22, 0.78);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: 8px;
+      padding: 18px 32px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 360px;
+    }
+    .title-menu-opt {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      border-radius: 4px;
+      color: #c0d0e8;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid transparent;
+    }
+    .title-menu-opt.active {
+      color: #ffffff;
+      background: linear-gradient(90deg, rgba(255, 0, 85, 0.35), transparent);
+      border-left: 3px solid #ff0055;
+      box-shadow: 0 0 16px rgba(255, 0, 85, 0.3);
+    }
+    .title-footer {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: rgba(200, 220, 245, 0.6);
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
@@ -613,6 +707,22 @@
         </div>
         <button class="menu-btn" id="resume-btn">RESUME OPERATION</button>
       </div>
+    </div>
+
+    <!-- TITLE SCREEN OVERLAY -->
+    <div id="title-screen" class="hidden">
+      <div class="title-logo-box">
+        <div class="title-gta">GRAND THEFT AUTO</div>
+        <div class="title-vi">VI</div>
+        <div class="title-sub">SOLIS CITY <span>// CORAL COAST</span></div>
+      </div>
+      <div class="title-menu-box">
+        <div class="title-menu-opt active">▶ STORY CAMPAIGN (8 CHAPTERS)</div>
+        <div class="title-menu-opt">CORAL COAST FREE ROAM</div>
+        <div class="title-menu-opt">TACTICAL CPD PURSUIT</div>
+        <div class="title-menu-opt">ARSENAL & TUNING GARAGE</div>
+      </div>
+      <div class="title-footer">THREE.JS WEBGL ENGINE · 6 COASTAL DISTRICTS · AIRBORNE PURSUIT AI</div>
     </div>
   </div>
 
