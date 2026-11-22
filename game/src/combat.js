@@ -1,276 +1,181 @@
-// SOLIS CITY: CORAL COAST - 5-Tier Combat & Ballistics Arsenal
-// Raycast weapon firing, luminous bullet tracers, muzzle flash bursts,
-// explosive RPG-7 projectiles, shockwaves, and particle spark physics.
-
-/* global THREE */
-
-export const WEAPON_TYPES = [
-  { id: 0, name: 'MELEE / BAT', damage: 30, fireRate: 0.4, mag: 1, maxAmmo: 1, range: 3.5, explosive: false },
-  { id: 1, name: 'CPD-9 PISTOL', damage: 35, fireRate: 0.22, mag: 15, maxAmmo: 90, range: 75, explosive: false },
-  { id: 2, name: 'AP-9 SUBMACHINE', damage: 28, fireRate: 0.09, mag: 30, maxAmmo: 180, range: 90, explosive: false },
-  { id: 3, name: 'M4A1 CARBINE', damage: 45, fireRate: 0.12, mag: 30, maxAmmo: 210, range: 140, explosive: false },
-  { id: 4, name: 'RPG-7 LAUNCHER', damage: 280, fireRate: 1.4, mag: 1, maxAmmo: 8, range: 180, explosive: true }
-];
+// 5-Tier Arsenal & Ballistics Combat System for SOLIS CITY: CORAL COAST
+// Weapons: P9 Viper, Vector-9 SMG, Carbine Mk-II, Havoc 12G Shotgun, Titan RPG.
+// Features: Raycast targeting, muzzle flash dynamic lights, bullet tracers, and explosive AOE.
 
 export class CombatSystem {
   constructor(scene, camera) {
     this.scene = scene;
     this.camera = camera;
 
-    // Arsenal state
-    this.weapons = WEAPON_TYPES.map(w => ({
-      ...w,
-      currentMag: w.mag,
-      reserveAmmo: w.maxAmmo
-    }));
-    this.currentWeaponIndex = 3; // Default to M4A1 CARBINE
+    this.weapons = [
+      { name: "P9 Viper", damage: 28, rate: 0.28, mag: 15, reserve: 60, spread: 0.015, fullAuto: false },
+      { name: "Vector-9 SMG", damage: 18, rate: 0.08, mag: 32, reserve: 160, spread: 0.05, fullAuto: true },
+      { name: "Carbine Mk-II", damage: 36, rate: 0.12, mag: 30, reserve: 120, spread: 0.03, fullAuto: true },
+      { name: "Havoc 12G", damage: 16, rate: 0.65, mag: 8, reserve: 40, spread: 0.11, pellets: 6, fullAuto: false },
+      { name: "Titan RPG", damage: 220, rate: 1.5, mag: 1, reserve: 6, spread: 0.01, explosive: true, fullAuto: false }
+    ];
 
-    this.lastFireTime = 0;
+    this.currentIdx = 2; // Carbine Mk-II default
+    this.lastShotTime = 0;
+    this.currentMag = this.weapons[this.currentIdx].mag;
+
     this.tracers = [];
     this.explosions = [];
-    this.rockets = [];
-    this.muzzleFlash = null;
+    this.raycaster = new THREE.Raycaster();
 
-    this.buildMuzzleFlash();
-  }
-
-  buildMuzzleFlash() {
-    const flashGeo = new THREE.SphereGeometry(0.35, 8, 8);
-    const flashMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0 });
-    this.muzzleFlash = new THREE.Mesh(flashGeo, flashMat);
-
-    this.flashLight = new THREE.PointLight(0xffbb33, 0, 15);
-    this.muzzleFlash.add(this.flashLight);
-
-    this.scene.add(this.muzzleFlash);
+    this.initMuzzleFlash();
   }
 
   getCurrentWeapon() {
-    return this.weapons[this.currentWeaponIndex];
+    return this.weapons[this.currentIdx];
   }
 
-  selectWeapon(index) {
-    if (index >= 0 && index < this.weapons.length) {
-      this.currentWeaponIndex = index;
+  selectWeapon(idx) {
+    if (idx >= 0 && idx < this.weapons.length) {
+      this.currentIdx = idx;
+      this.currentMag = this.weapons[this.currentIdx].mag;
     }
   }
 
-  fire(origin, direction, targets, audioManager) {
-    const now = performance.now() / 1000;
-    const weapon = this.getCurrentWeapon();
+  initMuzzleFlash() {
+    this.flashLight = new THREE.PointLight(0xffaa22, 0, 15);
+    this.scene.add(this.flashLight);
 
-    if (now - this.lastFireTime < weapon.fireRate) return false;
-    if (weapon.currentMag <= 0) {
+    const flashGeo = new THREE.SphereGeometry(0.35, 6, 6);
+    const flashMat = new THREE.MeshBasicMaterial({ color: 0xffe066 });
+    this.flashMesh = new THREE.Mesh(flashGeo, flashMat);
+    this.flashMesh.visible = false;
+    this.scene.add(this.flashMesh);
+  }
+
+  triggerMuzzleFlash(pos) {
+    this.flashLight.position.copy(pos);
+    this.flashLight.intensity = 4.5;
+    this.flashMesh.position.copy(pos);
+    this.flashMesh.visible = true;
+
+    setTimeout(() => {
+      this.flashLight.intensity = 0;
+      this.flashMesh.visible = false;
+    }, 45);
+  }
+
+  shoot(origin, policeSystem, audioSystem) {
+    const now = performance.now() * 0.001;
+    const wp = this.getCurrentWeapon();
+
+    if (now - this.lastShotTime < wp.rate) return false;
+    if (this.currentMag <= 0) {
       this.reload();
       return false;
     }
 
-    this.lastFireTime = now;
-    weapon.currentMag--;
+    this.lastShotTime = now;
+    this.currentMag--;
 
-    // Audio SFX trigger
-    if (audioManager) {
-      if (weapon.explosive) audioManager.playRpgLaunch();
-      else audioManager.playGunshot(weapon.name);
+    // Audio Trigger
+    if (audioSystem) {
+      audioSystem.playGunshot(wp.name);
     }
 
-    // Trigger Muzzle Flash
-    const muzzlePos = origin.clone().add(direction.clone().multiplyScalar(1.2));
-    this.muzzleFlash.position.copy(muzzlePos);
-    this.muzzleFlash.material.opacity = 1.0;
-    this.flashLight.intensity = 3.5;
-    setTimeout(() => {
-      if (this.muzzleFlash) {
-        this.muzzleFlash.material.opacity = 0;
-        this.flashLight.intensity = 0;
-      }
-    }, 50);
+    // Camera recoil kick
+    this.camera.rotation.x += (Math.random() * 0.02 + 0.015);
 
-    if (weapon.explosive) {
-      // Spawn flying RPG rocket
-      this.spawnRocket(origin, direction, targets);
-    } else {
-      // Instant Raycast Hitscan
-      this.fireBullet(origin, direction, weapon, targets);
+    // Muzzle Flash
+    this.triggerMuzzleFlash(origin);
+
+    // Ballistics Raycast from Camera Center
+    this.raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+
+    const rayDir = this.raycaster.ray.direction.clone();
+    rayDir.x += (Math.random() - 0.5) * wp.spread;
+    rayDir.y += (Math.random() - 0.5) * wp.spread;
+    rayDir.z += (Math.random() - 0.5) * wp.spread;
+    rayDir.normalize();
+
+    const targetPoint = origin.clone().add(rayDir.clone().multiplyScalar(150));
+
+    // Spawn Bullet Tracer Line
+    this.spawnTracer(origin, targetPoint);
+
+    // Check Police Cruisers Hit
+    policeSystem.cruisers.forEach(cruiser => {
+      const dx = cruiser.position.x - targetPoint.x;
+      const dz = cruiser.position.z - targetPoint.z;
+      if (Math.sqrt(dx * dx + dz * dz) < 8) {
+        policeSystem.addHeat(15);
+      }
+    });
+
+    // Explosive Titan RPG effect
+    if (wp.explosive) {
+      this.spawnExplosion(targetPoint);
+      if (audioSystem) audioSystem.playExplosion();
+      policeSystem.addHeat(30);
     }
 
     return true;
   }
 
-  fireBullet(origin, direction, weapon, targets) {
-    // Add subtle bullet spread
-    const spread = (Math.random() - 0.5) * 0.02;
-    const shotDir = direction.clone();
-    shotDir.x += spread;
-    shotDir.y += (Math.random() - 0.5) * 0.015;
-    shotDir.normalize();
-
-    const raycaster = new THREE.Raycaster(origin, shotDir, 0.5, weapon.range);
-    let hitPoint = origin.clone().add(shotDir.clone().multiplyScalar(weapon.range));
-
-    // Target intersection check
-    if (targets && targets.length > 0) {
-      const meshes = targets.map(t => t.mesh).filter(Boolean);
-      const hits = raycaster.intersectObjects(meshes, true);
-
-      if (hits.length > 0) {
-        hitPoint = hits[0].point;
-        // Find which target was hit
-        for (let target of targets) {
-          if (target.mesh && (hits[0].object === target.mesh || target.mesh.children.includes(hits[0].object))) {
-            target.takeDamage(weapon.damage);
-            break;
-          }
-        }
-      }
+  reload() {
+    const wp = this.getCurrentWeapon();
+    if (wp.reserve > 0) {
+      const needed = wp.mag - this.currentMag;
+      const take = Math.min(needed, wp.reserve);
+      this.currentMag += take;
+      wp.reserve -= take;
     }
-
-    // Visual Luminous Tracer Line
-    this.createTracer(origin, hitPoint);
   }
 
-  createTracer(start, end) {
-    const dir = new THREE.Vector3().subVectors(end, start);
-    const len = dir.length();
-    const tracerGeo = new THREE.CylinderGeometry(0.04, 0.04, Math.min(len, 6), 6);
-    tracerGeo.rotateX(Math.PI / 2);
-
-    const tracerMat = new THREE.MeshBasicMaterial({ color: 0x05d9e8, transparent: true, opacity: 0.95 });
-    const tracer = new THREE.Mesh(tracerGeo, tracerMat);
-
-    tracer.position.copy(start);
-    tracer.lookAt(end);
-    this.scene.add(tracer);
-
-    this.tracers.push({
-      mesh: tracer,
-      start: start.clone(),
-      end: end.clone(),
-      progress: 0,
-      speed: 180
-    });
-  }
-
-  spawnRocket(origin, direction, targets) {
-    const rocketGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.8, 8);
-    rocketGeo.rotateX(Math.PI / 2);
-    const rocketMat = new THREE.MeshStandardMaterial({ color: 0x2d3748, metalness: 0.9 });
-    const rocketMesh = new THREE.Mesh(rocketGeo, rocketMat);
-    rocketMesh.position.copy(origin);
-    rocketMesh.lookAt(origin.clone().add(direction));
-    this.scene.add(rocketMesh);
-
-    this.rockets.push({
-      mesh: rocketMesh,
-      velocity: direction.clone().multiplyScalar(55),
-      life: 0,
-      targets: targets
-    });
-  }
-
-  spawnExplosion(position, radius = 12, damage = 220, targets = []) {
-    // Fiery expanding explosion sphere
-    const expGeo = new THREE.SphereGeometry(1, 16, 16);
-    const expMat = new THREE.MeshBasicMaterial({
-      color: 0xff3300,
+  spawnTracer(from, to) {
+    const lineGeo = new THREE.BufferGeometry().setFromPoints([from, to]);
+    const lineMat = new THREE.LineBasicMaterial({
+      color: 0xffd200,
+      linewidth: 2,
       transparent: true,
       opacity: 0.95
     });
-    const expMesh = new THREE.Mesh(expGeo, expMat);
-    expMesh.position.copy(position);
-    this.scene.add(expMesh);
+    const line = new THREE.Line(lineGeo, lineMat);
+    this.scene.add(line);
 
-    // Dynamic explosion flash light
-    const expLight = new THREE.PointLight(0xff5500, 6.0, 45);
-    expLight.position.copy(position);
-    this.scene.add(expLight);
-
-    this.explosions.push({
-      mesh: expMesh,
-      light: expLight,
-      scale: 1,
-      maxScale: radius,
-      opacity: 0.95
-    });
-
-    // Damage & shockwave impulse on targets
-    targets.forEach(t => {
-      const d = t.position.distanceTo(position);
-      if (d < radius) {
-        const falloff = 1 - (d / radius);
-        t.takeDamage(damage * falloff);
-        if (t.speed !== undefined) {
-          t.speed += (Math.random() - 0.5) * 20;
-        }
-      }
-    });
+    this.tracers.push({ mesh: line, time: 0 });
   }
 
-  reload() {
-    const weapon = this.getCurrentWeapon();
-    const needed = weapon.mag - weapon.currentMag;
-    if (needed > 0 && weapon.reserveAmmo > 0) {
-      const taken = Math.min(needed, weapon.reserveAmmo);
-      weapon.currentMag += taken;
-      weapon.reserveAmmo -= taken;
-    }
+  spawnExplosion(pos) {
+    const sphereGeo = new THREE.SphereGeometry(4.5, 12, 12);
+    const sphereMat = new THREE.MeshBasicMaterial({
+      color: 0xff4400,
+      transparent: true,
+      opacity: 0.9
+    });
+    const exp = new THREE.Mesh(sphereGeo, sphereMat);
+    exp.position.copy(pos);
+    this.scene.add(exp);
+
+    this.explosions.push({ mesh: exp, scale: 1.0, opacity: 1.0 });
   }
 
-  update(dt, targets) {
-    // Update bullet tracers
+  update(dt) {
+    // Animate tracers fade out
     for (let i = this.tracers.length - 1; i >= 0; i--) {
       const t = this.tracers[i];
-      t.progress += t.speed * dt;
-      const totalDist = t.start.distanceTo(t.end);
-
-      if (t.progress >= totalDist) {
+      t.time += dt;
+      t.mesh.material.opacity -= dt * 9.0;
+      if (t.mesh.material.opacity <= 0 || t.time > 0.12) {
         this.scene.remove(t.mesh);
         this.tracers.splice(i, 1);
-      } else {
-        const factor = t.progress / totalDist;
-        t.mesh.position.lerpVectors(t.start, t.end, factor);
       }
     }
 
-    // Update flying rockets
-    for (let i = this.rockets.length - 1; i >= 0; i--) {
-      const r = this.rockets[i];
-      r.life += dt;
-      r.mesh.position.addScaledVector(r.velocity, dt);
-
-      // Check impact with ground or targets
-      let impacted = false;
-      if (r.mesh.position.y <= 0.3 || r.life > 3.0) {
-        impacted = true;
-      } else if (targets) {
-        for (let target of targets) {
-          if (target.position.distanceTo(r.mesh.position) < 3.0) {
-            impacted = true;
-            break;
-          }
-        }
-      }
-
-      if (impacted) {
-        this.spawnExplosion(r.mesh.position, 14, 250, targets);
-        this.scene.remove(r.mesh);
-        this.rockets.splice(i, 1);
-      }
-    }
-
-    // Update explosions
+    // Animate explosive fireballs
     for (let i = this.explosions.length - 1; i >= 0; i--) {
       const exp = this.explosions[i];
-      exp.scale += (exp.maxScale - exp.scale) * 12 * dt;
-      exp.opacity -= 1.8 * dt;
-
-      exp.mesh.scale.setScalar(exp.scale);
+      exp.scale += dt * 14.0;
+      exp.opacity -= dt * 2.2;
+      exp.mesh.scale.set(exp.scale, exp.scale, exp.scale);
       exp.mesh.material.opacity = Math.max(0, exp.opacity);
-      exp.light.intensity = Math.max(0, exp.opacity * 6.0);
-
       if (exp.opacity <= 0) {
         this.scene.remove(exp.mesh);
-        this.scene.remove(exp.light);
         this.explosions.splice(i, 1);
       }
     }
