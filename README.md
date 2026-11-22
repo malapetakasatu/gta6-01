@@ -1,24 +1,27 @@
 # SOLIS CITY: CORAL COAST
 
-[![make.fun](https://make.fun/api/competitions/gta6-01/badge)](https://make.fun/bounty/gta6-01)
-[![make.fun result](https://make.fun/api/competitions/gta6-01/results/badge)](https://make.fun/bounty/gta6-01)
-[![make.fun status](https://make.fun/api/competitions/gta6-01/status/badge)](https://make.fun/bounty/gta6-01)
+[![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![rank](https://make.fun/badge/gta6-01/malapetakasatu/gta6-01/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![reward](https://make.fun/badge/gta6-01/malapetakasatu/gta6-01/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 
-An original 3D open-world crime epic set in the sun-soaked coastal metropolis of Solis City.
+An original, high-fidelity 3D open-world crime action game built for the [make.fun Make GTA 6 Bounty](https://make.fun/bounty/gta6-01).
 
 ## Features
-- **Explorable 3D Coastal Open-World**: Explore downtown skyscrapers, neon-lit marina boulevards, industrial docks, and sunny beachfronts.
-- **Dynamic Driving & Traffic**: High-speed vehicle physics, sports coupes, police cruisers, and civilian traffic.
-- **Tactical Police Dispatch**: 5-star wanted system featuring CPD patrol units, roadblocks, spike strips, and tactical police helicopters with searchlights.
-- **On-Foot Combat**: Full weapon arsenal including pistols, combat SMGs, shotguns, assault rifles, and sniper rifles with dynamic muzzle flashes.
-- **Narrative Story Missions**: 8 multi-stage story contracts, crew perk abilities, district reputation tracking, and interactive GPS minimap.
-- **Full AAA HUD**: Minimap with GPS routing, police dispatch monitor, radio station dialogue subtitles, digital speedometer, and weapon wheel.
+- **Full 3D Procedural Coastal Metropolis**: Expansive beachfront boulevard, palm trees, ocean waves, and illuminated skyline with rooftop helipads and neon signs.
+- **High-Speed Vehicle Physics**: Drive the **Veloce GTS Turbo** supercar down the coast with dynamic wheel rotation and handling.
+- **CPD Tactical Pursuit AI**: Aggressive patrol cruisers with flashing red/blue lightbars, roadblock enforcers, and **CONDOR-1** air patrol helicopter with a searchlight beam.
+- **5-Tier Ballistic Arsenal**: Raycast combat system featuring fists, .45 pistol, combat SMG, 12G shotgun, and assault carbine with realistic muzzle flashes and tracers.
+- **8 Story Operations**: Complete campaign progression across 6 distinct districts (Coral Strand, Downtown Solis, Marina Del Sur, Palm District, Old Port, Industrial Docks).
+- **AAA GTA 6 HUD**: Radar minimap with real-time enemy police blips, vector GPS district navigation, radio comms dialogue cards, wanted stars, speedometer, and status indicators.
 
-## How to Run
+## Run Locally
+Serve the game static files:
 ```bash
 node serve.ts
-# Open http://localhost:8080 in desktop Chrome
 ```
+Then open http://localhost:8080 in desktop Chrome.
 
-## License
-MIT
+## Build Dossier
+```bash
+mkdir -p out && MAKEFUN_OUTPUT_DIR=out node --experimental-strip-types main.ts
+```
