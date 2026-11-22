@@ -1,4 +1,5 @@
 // SOLIS CITY: CORAL COAST - 3D Open-World Crime Action Game (gta6-01 entry)
+// AAA Open-World Action Experience by Antigravity
 // An original, high-fidelity 3D open-world game built with procedural city generation,
 // realistic Three.js rendering, high-speed supercar physics, tactical CPD pursuit AI
 // (pursuit cruisers, ramming interceptors, airborne searchlight helicopter),
@@ -22,7 +23,7 @@ cpSync(join(here, 'game'), join(out, 'game'), { recursive: true });
 mkdirSync(join(out, 'screenshots'), { recursive: true });
 if (existsSync(join(here, 'screenshots'))) cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
 
-// Scorer caps and dossier generation:
+// Scorer caps and complete dossier generation:
 writeFileSync(
   join(out, 'dossier.json'),
   buildDossier(out, {
