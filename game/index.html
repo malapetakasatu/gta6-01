@@ -12,722 +12,349 @@
       user-select: none;
       -webkit-user-select: none;
     }
+
     body, html {
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #000;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #050811;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
       color: #fff;
     }
-    #game-container {
+
+    #webgl-canvas {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      overflow: hidden;
-    }
-    #webgl-canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
+      z-index: 1;
+      outline: none;
     }
 
-    /* HUD OVERLAY */
-    #hud {
+    /* Cyberpunk HUD Layer */
+    #hud-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
+      z-index: 10;
       pointer-events: none;
     }
 
-    /* MISSION TRACKER */
-    #mission-tracker {
+    /* Radar Minimap */
+    #minimap-container {
       position: absolute;
-      top: 24px;
-      left: 28px;
-      background: rgba(10, 15, 26, 0.75);
-      border-left: 4px solid #ffcc00;
-      backdrop-filter: blur(8px);
-      padding: 12px 18px;
-      border-radius: 0 6px 6px 0;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      max-width: 360px;
-    }
-    #mission-category {
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      color: #ffcc00;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    #mission-title {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: #ffffff;
-      margin-bottom: 4px;
-    }
-    #mission-objective {
-      font-size: 13px;
-      color: #d0d8e8;
-      line-height: 1.4;
-    }
-    #mission-distance {
-      margin-top: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #00f0ff;
-      letter-spacing: 0.5px;
+      bottom: 25px;
+      left: 25px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
     }
 
-    /* DISPATCH & RADIO BOX */
-    #dispatch-box {
-      position: absolute;
-      top: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(8, 12, 20, 0.85);
-      border: 1px solid rgba(255, 60, 60, 0.4);
-      border-radius: 4px;
-      padding: 8px 18px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 16px rgba(255, 30, 30, 0.2);
-      transition: opacity 0.3s ease;
-      opacity: 0;
-    }
-    #dispatch-box.active {
-      opacity: 1;
-    }
-    #dispatch-tag {
-      background: #ff2a2a;
-      color: #fff;
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      padding: 3px 6px;
-      border-radius: 2px;
-      text-transform: uppercase;
-    }
-    #dispatch-text {
-      font-size: 13px;
-      font-weight: 600;
-      color: #f0f4ff;
-      letter-spacing: 0.5px;
+    #minimap-canvas {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
     }
 
-    /* WANTED STARS & WEAPON HUD (TOP RIGHT) */
-    #top-right-hud {
+    /* Speedometer */
+    #speedometer {
       position: absolute;
-      top: 24px;
-      right: 28px;
+      bottom: 25px;
+      right: 35px;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 12px;
-    }
-    #wanted-stars {
-      display: flex;
-      gap: 6px;
-      background: rgba(10, 15, 26, 0.7);
-      padding: 8px 14px;
-      border-radius: 6px;
+      background: rgba(10, 15, 28, 0.75);
+      border-left: 3px solid #00f0ff;
+      padding: 10px 18px;
+      border-radius: 4px;
       backdrop-filter: blur(8px);
-    }
-    .star {
-      font-size: 22px;
-      color: #2b3548;
-      transition: color 0.2s, transform 0.2s;
-    }
-    .star.active {
-      color: #ff3333;
-      text-shadow: 0 0 10px #ff0000;
-      transform: scale(1.15);
-      animation: pulseStar 0.8s infinite alternate;
-    }
-    @keyframes pulseStar {
-      from { transform: scale(1.05); }
-      to { transform: scale(1.25); text-shadow: 0 0 16px #ff2222; }
     }
 
-    #weapon-hud {
-      background: rgba(10, 15, 26, 0.75);
-      padding: 10px 16px;
-      border-radius: 6px;
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      border-right: 4px solid #00f0ff;
-    }
-    #weapon-icon {
-      width: 44px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-    #weapon-info {
-      text-align: right;
-    }
-    #weapon-name {
-      font-size: 12px;
+    #speed-value {
+      font-size: 38px;
       font-weight: 800;
       letter-spacing: 1px;
       color: #00f0ff;
-      text-transform: uppercase;
-    }
-    #weapon-ammo {
-      font-size: 18px;
-      font-weight: 900;
-      color: #ffffff;
-      letter-spacing: 1px;
-    }
-    #weapon-ammo span {
-      font-size: 13px;
-      color: #8da0b8;
+      text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
     }
 
-    /* RADAR & HEALTH/ARMOUR (BOTTOM LEFT) */
-    #bottom-left-hud {
+    #gear-value {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #ffaa00;
+    }
+
+    /* Wanted Stars */
+    #wanted-stars {
       position: absolute;
-      bottom: 24px;
-      left: 28px;
+      top: 25px;
+      right: 35px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .star {
+      width: 26px;
+      height: 26px;
+      background: rgba(255, 255, 255, 0.15);
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      transition: all 0.2s ease;
+    }
+
+    .star.active {
+      background: #ffcc00;
+      box-shadow: 0 0 12px #ffcc00;
+    }
+
+    .star.active.strobe {
+      background: #ff0044;
+      box-shadow: 0 0 16px #ff0044;
+    }
+
+    /* Weapon & Ammo HUD */
+    #weapon-hud {
+      position: absolute;
+      top: 65px;
+      right: 35px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      align-items: flex-end;
+      background: rgba(10, 15, 28, 0.7);
+      padding: 8px 14px;
+      border-right: 3px solid #ff007f;
+      border-radius: 4px;
     }
-    #radar-frame {
-      width: 170px;
-      height: 170px;
-      border-radius: 50%;
-      background: rgba(6, 10, 18, 0.82);
-      border: 3px solid rgba(0, 240, 255, 0.35);
-      box-shadow: 0 6px 24px rgba(0,0,0,0.6), inset 0 0 15px rgba(0, 240, 255, 0.1);
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(8px);
+
+    #weapon-name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #ff007f;
     }
-    #radar-canvas {
-      width: 100%;
-      height: 100%;
+
+    #weapon-ammo {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
     }
-    #radar-compass {
+
+    /* Player Vitals */
+    #vitals-container {
       position: absolute;
-      top: 6px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 11px;
-      font-weight: 900;
-      color: #ff3333;
-      letter-spacing: 1px;
-    }
-    #bars-container {
-      width: 170px;
+      bottom: 215px;
+      left: 25px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
+      width: 180px;
     }
-    .status-bar-bg {
+
+    .bar-bg {
       width: 100%;
-      height: 6px;
-      background: rgba(20, 30, 45, 0.85);
-      border-radius: 3px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
       overflow: hidden;
     }
+
     #health-bar {
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, #00e676, #00b0ff);
-      transition: width 0.15s ease-out;
-    }
-    #armour-bar {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, #2979ff, #d500f9);
-      transition: width 0.15s ease-out;
+      background: #00ff88;
+      box-shadow: 0 0 8px #00ff88;
+      transition: width 0.2s;
     }
 
-    /* SPEEDOMETER (BOTTOM RIGHT) */
-    #speedo-hud {
-      position: absolute;
-      bottom: 24px;
-      right: 28px;
-      background: rgba(10, 15, 26, 0.75);
-      padding: 12px 20px;
-      border-radius: 8px;
-      backdrop-filter: blur(8px);
-      border-left: 4px solid #ff3366;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      min-width: 140px;
-    }
-    #speed-number {
-      font-size: 38px;
-      font-weight: 900;
-      color: #ffffff;
-      line-height: 1;
-      font-variant-numeric: tabular-nums;
-      text-shadow: 0 0 12px rgba(255, 51, 102, 0.4);
-    }
-    #speed-unit {
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      color: #ff3366;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-    #gear-indicator {
-      font-size: 13px;
-      font-weight: 800;
-      color: #8da0b8;
-      margin-top: 4px;
-    }
-    #rpm-bar-container {
+    #armor-bar {
       width: 100%;
-      height: 4px;
-      background: rgba(30, 40, 60, 0.8);
-      margin-top: 6px;
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    #rpm-bar {
-      width: 0%;
       height: 100%;
-      background: linear-gradient(90deg, #00f0ff, #ffcc00, #ff0055);
-      transition: width 0.05s linear;
+      background: #00d0ff;
+      box-shadow: 0 0 8px #00d0ff;
+      transition: width 0.2s;
     }
 
-    /* DISTRICT BANNER */
-    #district-banner {
+    /* Mission Objectives */
+    #mission-card {
       position: absolute;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(50px);
-      opacity: 0;
-      background: rgba(6, 10, 18, 0.85);
-      border-bottom: 3px solid #00f0ff;
-      padding: 10px 28px;
+      top: 25px;
+      left: 25px;
+      background: rgba(10, 15, 28, 0.85);
+      border-left: 4px solid #ffaa00;
+      padding: 12px 18px;
       border-radius: 4px;
-      backdrop-filter: blur(10px);
-      text-align: center;
-      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    #district-banner.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-    #district-title {
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: #ffffff;
-    }
-    #district-sub {
-      font-size: 11px;
-      letter-spacing: 2px;
-      color: #00f0ff;
-      text-transform: uppercase;
-      margin-top: 2px;
+      max-width: 320px;
+      backdrop-filter: blur(8px);
     }
 
-    /* CROSSHAIR & HITMARKER */
+    #obj-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffaa00;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    #obj-desc {
+      font-size: 13px;
+      color: #d8e0ea;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    #obj-dist {
+      font-size: 11px;
+      color: #00f0ff;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* Toast Notification */
+    #hud-toast {
+      position: absolute;
+      top: 35px;
+      left: 50%;
+      transform: translate(-50%, -10px);
+      background: rgba(15, 20, 35, 0.95);
+      border: 1px solid #00f0ff;
+      color: #00f0ff;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      font-size: 15px;
+      padding: 12px 28px;
+      border-radius: 30px;
+      opacity: 0;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
+    }
+
+    /* Center Crosshair */
     #crosshair {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 16px;
-      height: 16px;
-      pointer-events: none;
-    }
-    #crosshair::before, #crosshair::after {
-      content: "";
-      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
       background: rgba(255, 255, 255, 0.7);
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
     }
-    #crosshair::before {
-      top: 7px;
-      left: 0;
-      width: 16px;
-      height: 2px;
-    }
-    #crosshair::after {
-      top: 0;
-      left: 7px;
-      width: 2px;
-      height: 16px;
-    }
+
+    /* Hitmarker */
     #hitmarker {
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) rotate(45deg);
-      width: 20px;
-      height: 20px;
-      border: 2px solid #ff2a2a;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
       opacity: 0;
-      transition: opacity 0.1s ease;
       pointer-events: none;
+      transition: opacity 0.05s ease;
     }
-    #hitmarker.show {
-      opacity: 1;
+    #hitmarker::before, #hitmarker::after {
+      content: '';
+      position: absolute;
+      background: #ff0033;
+    }
+    #hitmarker::before {
+      top: 0; left: 11px; width: 2px; height: 24px; transform: rotate(45deg);
+    }
+    #hitmarker::after {
+      top: 0; left: 11px; width: 2px; height: 24px; transform: rotate(-45deg);
     }
 
-    /* DAMAGE VIGNETTE */
-    #damage-vignette {
+    /* Title Presentation Banner */
+    #title-card {
+      display: none;
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      box-shadow: inset 0 0 80px rgba(255, 0, 0, 0);
-      pointer-events: none;
-      transition: box-shadow 0.15s ease-out;
-    }
-    #damage-vignette.hit {
-      box-shadow: inset 0 0 100px rgba(255, 0, 0, 0.7);
-    }
-
-    /* INTERACTION PROMPT */
-    #prompt-box {
-      position: absolute;
-      bottom: 210px;
+      bottom: 60px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(10, 15, 26, 0.85);
-      border: 1px solid rgba(0, 240, 255, 0.4);
-      padding: 8px 18px;
-      border-radius: 4px;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.8px;
-      color: #ffffff;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-      backdrop-filter: blur(6px);
-    }
-    #prompt-box.show {
-      opacity: 1;
-    }
-    #prompt-box kbd {
-      background: #00f0ff;
-      color: #050a12;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-weight: 900;
-      margin: 0 4px;
-    }
-
-    /* CONTROLS & PAUSE MODAL */
-    #pause-menu {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(5, 8, 14, 0.85);
-      backdrop-filter: blur(12px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 99;
-    }
-    #pause-menu.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .menu-card {
-      background: rgba(12, 18, 30, 0.9);
-      border: 1px solid rgba(0, 240, 255, 0.25);
+      text-align: center;
+      background: rgba(8, 12, 22, 0.8);
+      padding: 20px 48px;
+      border-top: 2px solid #00f0ff;
+      border-bottom: 2px solid #ff007f;
       border-radius: 8px;
-      padding: 32px 48px;
-      max-width: 520px;
-      text-align: center;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-    }
-    .menu-title {
-      font-size: 28px;
-      font-weight: 900;
-      letter-spacing: 3px;
-      color: #ffffff;
-      margin-bottom: 4px;
-    }
-    .menu-sub {
-      font-size: 13px;
-      letter-spacing: 2px;
-      color: #00f0ff;
-      text-transform: uppercase;
-      margin-bottom: 24px;
-    }
-    .controls-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      text-align: left;
-      font-size: 13px;
-      color: #c4d0e2;
-      margin-bottom: 28px;
-    }
-    .control-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 10px;
-      background: rgba(20, 28, 44, 0.6);
-      border-radius: 4px;
-    }
-    .control-item kbd {
-      background: #00f0ff;
-      color: #050a12;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-weight: 900;
-      font-size: 11px;
-    }
-    .menu-btn {
-      background: linear-gradient(90deg, #ff3366, #ff0055);
-      border: none;
-      color: #ffffff;
-      padding: 12px 32px;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      border-radius: 4px;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(255, 0, 85, 0.4);
-      transition: transform 0.1s, box-shadow 0.1s;
-    }
-    .menu-btn:hover {
-      transform: scale(1.04);
-      box-shadow: 0 6px 22px rgba(255, 0, 85, 0.6);
+      backdrop-filter: blur(12px);
     }
 
-    /* TITLE SCREEN PRESENTATION */
-    #title-screen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      padding: 48px 40px 36px;
-      box-sizing: border-box;
-      background: radial-gradient(circle at center, rgba(10, 16, 28, 0.15) 0%, rgba(5, 8, 16, 0.8) 100%);
-      pointer-events: none;
-      z-index: 100;
-    }
-    #title-screen.hidden {
-      display: none;
-    }
-    .title-logo-box {
-      text-align: center;
-    }
-    .title-gta {
-      font-size: 20px;
+    #title-card h1 {
+      font-size: 42px;
       font-weight: 900;
-      letter-spacing: 10px;
-      text-transform: uppercase;
-      color: #ff3366;
-      text-shadow: 0 0 16px rgba(255, 51, 102, 0.8);
-      margin-bottom: 2px;
-    }
-    .title-vi {
-      font-size: 84px;
-      font-weight: 900;
-      line-height: 0.9;
-      letter-spacing: 6px;
-      background: linear-gradient(180deg, #ffffff 20%, #ff88a3 60%, #ff0055 100%);
+      letter-spacing: 8px;
+      background: linear-gradient(135deg, #00f0ff, #ff007f);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 24px rgba(255, 0, 85, 0.7));
+      text-shadow: 0 0 30px rgba(0, 240, 255, 0.6);
     }
-    .title-sub {
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: 5px;
-      color: #00f0ff;
-      text-shadow: 0 0 14px rgba(0, 240, 255, 0.8);
-      text-transform: uppercase;
+
+    #title-card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 6px;
+      color: #ffaa00;
       margin-top: 6px;
-    }
-    .title-sub span {
-      color: #ffcc00;
-    }
-    .title-menu-box {
-      background: rgba(8, 12, 22, 0.78);
-      border: 1px solid rgba(0, 240, 255, 0.35);
-      border-radius: 8px;
-      padding: 18px 32px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-width: 360px;
-    }
-    .title-menu-opt {
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      padding: 8px 16px;
-      border-radius: 4px;
-      color: #c0d0e8;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(255, 255, 255, 0.03);
-      border-left: 3px solid transparent;
-    }
-    .title-menu-opt.active {
-      color: #ffffff;
-      background: linear-gradient(90deg, rgba(255, 0, 85, 0.35), transparent);
-      border-left: 3px solid #ff0055;
-      box-shadow: 0 0 16px rgba(255, 0, 85, 0.3);
-    }
-    .title-footer {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: rgba(200, 220, 245, 0.6);
-      text-transform: uppercase;
     }
   </style>
 </head>
 <body>
-  <div id="game-container">
-    <canvas id="webgl-canvas"></canvas>
+  <canvas id="webgl-canvas"></canvas>
 
-    <!-- HUD OVERLAY -->
-    <div id="hud">
-      <!-- MISSION TRACKER -->
-      <div id="mission-tracker">
-        <div id="mission-category">STORY CAMPAIGN</div>
-        <div id="mission-title">CORAL COAST AWAKENING</div>
-        <div id="mission-objective">Mount the Veloce GTS Turbo and reach Downtown Core.</div>
-        <div id="mission-distance">OBJECTIVE: 420m</div>
-      </div>
-
-      <!-- DISPATCH ALERT -->
-      <div id="dispatch-box">
-        <div id="dispatch-tag">CPD DISPATCH</div>
-        <div id="dispatch-text">All units, suspect spotted in Coral Marina. Code 3 authorized.</div>
-      </div>
-
-      <!-- TOP RIGHT: WANTED & WEAPONS -->
-      <div id="top-right-hud">
-        <div id="wanted-stars">
-          <span class="star" id="star-1">★</span>
-          <span class="star" id="star-2">★</span>
-          <span class="star" id="star-3">★</span>
-          <span class="star" id="star-4">★</span>
-          <span class="star" id="star-5">★</span>
-        </div>
-
-        <div id="weapon-hud">
-          <div id="weapon-icon">🔫</div>
-          <div id="weapon-info">
-            <div id="weapon-name">CAR-80 CARBINE</div>
-            <div id="weapon-ammo"><span id="ammo-clip">30</span> / <span id="ammo-total">150</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- BOTTOM LEFT: RADAR & HEALTH -->
-      <div id="bottom-left-hud">
-        <div id="radar-frame">
-          <div id="radar-compass">N</div>
-          <canvas id="radar-canvas" width="200" height="200"></canvas>
-        </div>
-        <div id="bars-container">
-          <div class="status-bar-bg"><div id="health-bar"></div></div>
-          <div class="status-bar-bg"><div id="armour-bar"></div></div>
-        </div>
-      </div>
-
-      <!-- BOTTOM RIGHT: SPEEDOMETER -->
-      <div id="speedo-hud">
-        <div id="speed-number">0</div>
-        <div id="speed-unit">MPH</div>
-        <div id="gear-indicator">GEAR 1</div>
-        <div id="rpm-bar-container"><div id="rpm-bar"></div></div>
-      </div>
-
-      <!-- DISTRICT TOAST -->
-      <div id="district-banner">
-        <div id="district-title">OCEAN BOULEVARD</div>
-        <div id="district-sub">CORAL COAST DISTRICT</div>
-      </div>
-
-      <!-- INTERACTION PROMPT -->
-      <div id="prompt-box"><kbd>E</kbd> ENTER VELOCE GTS TURBO</div>
-
-      <!-- CROSSHAIR & DAMAGE -->
-      <div id="crosshair"></div>
-      <div id="hitmarker"></div>
-      <div id="damage-vignette"></div>
+  <div id="hud-overlay">
+    <div id="mission-card">
+      <div id="obj-title">MISSION</div>
+      <div id="obj-desc">Explore Solis City</div>
+      <div id="obj-dist">0m to target</div>
     </div>
 
-    <!-- PAUSE & CONTROLS MENU -->
-    <div id="pause-menu">
-      <div class="menu-card">
-        <div class="menu-title">SOLIS CITY: CORAL COAST</div>
-        <div class="menu-sub">TACTICAL CONTROLS & ARCHITECTURE</div>
-        <div class="controls-grid">
-          <div class="control-item"><span>Accelerate / Move</span> <kbd>W / ↑</kbd></div>
-          <div class="control-item"><span>Brake / Reverse</span> <kbd>S / ↓</kbd></div>
-          <div class="control-item"><span>Steering / Aim</span> <kbd>A / D</kbd></div>
-          <div class="control-item"><span>Handbrake Drift</span> <kbd>SPACE</kbd></div>
-          <div class="control-item"><span>Enter / Exit Vehicle</span> <kbd>E</kbd></div>
-          <div class="control-item"><span>Fire Weapon</span> <kbd>L-CLICK</kbd></div>
-          <div class="control-item"><span>Select Weapon (1-5)</span> <kbd>1 - 5</kbd></div>
-          <div class="control-item"><span>Reload Arsenal</span> <kbd>R</kbd></div>
-          <div class="control-item"><span>Cycle Chase Camera</span> <kbd>C</kbd></div>
-          <div class="control-item"><span>Pause / Resume</span> <kbd>ESC</kbd></div>
-        </div>
-        <button class="menu-btn" id="resume-btn">RESUME OPERATION</button>
-      </div>
+    <div id="vitals-container">
+      <div class="bar-bg"><div id="health-bar"></div></div>
+      <div class="bar-bg"><div id="armor-bar"></div></div>
     </div>
 
-    <!-- TITLE SCREEN OVERLAY -->
-    <div id="title-screen" class="hidden">
-      <div class="title-logo-box">
-        <div class="title-gta">GRAND THEFT AUTO</div>
-        <div class="title-vi">VI</div>
-        <div class="title-sub">SOLIS CITY <span>// CORAL COAST</span></div>
-      </div>
-      <div class="title-menu-box">
-        <div class="title-menu-opt active">▶ STORY CAMPAIGN (8 CHAPTERS)</div>
-        <div class="title-menu-opt">CORAL COAST FREE ROAM</div>
-        <div class="title-menu-opt">TACTICAL CPD PURSUIT</div>
-        <div class="title-menu-opt">ARSENAL & TUNING GARAGE</div>
-      </div>
-      <div class="title-footer">THREE.JS WEBGL ENGINE · 6 COASTAL DISTRICTS · AIRBORNE PURSUIT AI</div>
+    <div id="minimap-container">
+      <canvas id="minimap-canvas" width="180" height="180"></canvas>
+    </div>
+
+    <div id="speedometer">
+      <div id="speed-value">0 MPH</div>
+      <div id="gear-value">GEAR N</div>
+    </div>
+
+    <div id="wanted-stars">
+      <div class="star"></div>
+      <div class="star"></div>
+      <div class="star"></div>
+      <div class="star"></div>
+      <div class="star"></div>
+    </div>
+
+    <div id="weapon-hud">
+      <div id="weapon-name">CAR-80 CARBINE</div>
+      <div id="weapon-ammo">30 / 180</div>
+    </div>
+
+    <div id="crosshair"></div>
+    <div id="hitmarker"></div>
+    <div id="hud-toast"></div>
+
+    <div id="title-card">
+      <h1>SOLIS CITY</h1>
+      <h2>CORAL COAST</h2>
     </div>
   </div>
 
-  <!-- THREE.JS ENGINE & SOURCE MODULES -->
+  <!-- Runtime Libraries -->
   <script src="vendor/three.min.js"></script>
+  <!-- Application Bootstrap -->
   <script type="module" src="src/main.js"></script>
 </body>
 </html>

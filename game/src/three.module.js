@@ -1,0 +1,33 @@
+// Three.js ES Module wrapper bridging vendor runtime
+const THREE = window.THREE;
+export default THREE;
+export const {
+  Scene,
+  PerspectiveCamera,
+  WebGLRenderer,
+  Vector3,
+  Euler,
+  Group,
+  Mesh,
+  BoxGeometry,
+  PlaneGeometry,
+  CylinderGeometry,
+  SphereGeometry,
+  OctahedronGeometry,
+  ConeGeometry,
+  BufferGeometry,
+  MeshStandardMaterial,
+  MeshBasicMaterial,
+  LineBasicMaterial,
+  Line,
+  CanvasTexture,
+  AmbientLight,
+  DirectionalLight,
+  PointLight,
+  SpotLight,
+  FogExp2,
+  Raycaster,
+  RepeatWrapping,
+  DoubleSide,
+  Color,
+} = THREE;
