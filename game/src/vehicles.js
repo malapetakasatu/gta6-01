@@ -1,4 +1,4 @@
-// SOLIS CITY: CORAL COAST - High-Fidelity 3D Vehicles & Flight Systems
+// SOLIS CITY: CORAL COAST (v2.0 AAA WebGL Engine) - High-Fidelity 3D Vehicles & Flight Systems
 // Supercar Veloce GTS Turbo, CPD Police Pursuit Cruisers, Tactical CONDOR-1 Helicopter.
 
 const THREE = window.THREE;

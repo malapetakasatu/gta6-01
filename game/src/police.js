@@ -1,4 +1,4 @@
-// SOLIS CITY: CORAL COAST - Tactical CPD Pursuit AI & Wanted Star Manager
+// SOLIS CITY: CORAL COAST (v2.0 AAA WebGL Engine) - Tactical CPD Pursuit AI & Wanted Star Manager
 // 4 Wanted Stars, aggressive ramming interceptors, tactical roadblocks, dispatch alerts.
 
 const THREE = window.THREE;
