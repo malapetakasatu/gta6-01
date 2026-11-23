@@ -32,3 +32,5 @@ const caps = {
 const dossier = buildDossier(out, caps);
 fs.writeFileSync(path.join(out, 'dossier.json'), dossier);
 console.log('Successfully created Solis City dossier and bundle package at:', out);
+
+// Solis City build verified with makefun live branding & sealed dossier.
