@@ -1,8 +1,8 @@
 # Solis City: Coral Coast (GTA 6 Submission)
 
-[![make.fun](https://make.fun/api/competitions/gta6-01/badge)](https://make.fun/c/gta6-01)
-[![Rank](https://make.fun/api/competitions/gta6-01/entries/malapetakasatu/badge?metric=rank)](https://make.fun/c/gta6-01)
-[![Score](https://make.fun/api/competitions/gta6-01/entries/malapetakasatu/badge?metric=score)](https://make.fun/c/gta6-01)
+[![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![rank](https://make.fun/badge/gta6-01/malapetakasatu/gta6-01/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![reward](https://make.fun/badge/gta6-01/malapetakasatu/gta6-01/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 
 **Solis City: Coral Coast** is an open-world 3D WebGL action adventure built in Three.js, inspired by the sun-drenched neon metropolis of next-generation crime sagas. Navigate a sprawling urban paradise, command high-performance supercars, engage tactical law enforcement, and rise through syndicate ranks.
 
