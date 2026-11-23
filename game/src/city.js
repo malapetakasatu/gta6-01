@@ -1,4 +1,4 @@
-// SOLIS CITY: CORAL COAST (v2.1 AAA WebGL Engine) - Procedural 3D Coastal City Generator
+// SOLIS CITY: CORAL COAST - Procedural 3D Coastal City Generator
 // 40+ skyscrapers, lit window textures, neon billboards, coastal beach, palm promenade, arterial roads.
 
 const THREE = window.THREE;

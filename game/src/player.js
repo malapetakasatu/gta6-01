@@ -1,4 +1,4 @@
-// SOLIS CITY: CORAL COAST (v2.1 AAA WebGL Engine) - 3rd Person Player Controller & Chase Camera
+// SOLIS CITY: CORAL COAST - 3rd Person Player Controller & Chase Camera
 // Character mesh, health/armour stats, vehicle mounting, dynamic camera lag & FOV.
 
 const THREE = window.THREE;

@@ -1,4 +1,4 @@
-// SOLIS CITY: CORAL COAST (v2.1 AAA WebGL Engine) - Cinematic Screenshot Staging Engine
+// SOLIS CITY: CORAL COAST - Cinematic Screenshot Staging Engine
 // Provides deterministic AAA scene composition for competition render passes:
 // ?shot=chase  -> 4-Star Ocean Blvd Pursuit: Supercar drift, flanking CPD cruisers, roadblock, CONDOR-1 spotlight
 // ?shot=combat -> Downtown Coral Bank Firefight: On-foot shootout, muzzle flash, glowing tracers, syndicate ambush

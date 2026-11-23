@@ -1,4 +1,4 @@
-// SOLIS CITY: CORAL COAST (v2.1 AAA WebGL Engine) - 5-Tier Tactical Arsenal & Raycast Ballistics
+// SOLIS CITY: CORAL COAST - 5-Tier Tactical Arsenal & Raycast Ballistics
 // Solis .45, Coral-9 SMG, CAR-80 Carbine, Enforcer 12G, Titan RPG Rocket Launcher.
 
 const THREE = window.THREE;

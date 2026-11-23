@@ -1,4 +1,4 @@
-// SOLIS CITY: CORAL COAST (v2.1 AAA WebGL Engine) - Web Audio API Mathematical Sound Synthesizer
+// SOLIS CITY: CORAL COAST - Web Audio API Mathematical Sound Synthesizer
 // Supercar engine roar, turbo blowoff, tire drift squeal, police sirens, 5 gunshots, explosions.
 
 export class AudioManager {

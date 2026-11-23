@@ -1,4 +1,4 @@
-// SOLIS CITY: CORAL COAST (v2.1 AAA WebGL Engine) - Three.js WebGL Engine Core & Render Loop
+// SOLIS CITY: CORAL COAST - Three.js WebGL Engine Core & Render Loop
 // Orchestrates City, Vehicles, Player, Police AI, Combat Arsenal, Story Missions, and AAA HUD.
 
 import { City } from './city.js';

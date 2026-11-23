@@ -1,5 +1,4 @@
-// SOLIS CITY: CORAL COAST (v2.0 AAA WebGL) - 3D Open-World Crime Action Game (gta6-01 entry)
-//   title: "SOLIS CITY: CORAL COAST (v2.1 AAA WebGL)",
+// SOLIS CITY: CORAL COAST - 3D Open-World Crime Action Game (gta6-01 entry)
 // An original, high-fidelity 3D open-world game built with procedural city generation,
 // realistic Three.js rendering, high-speed supercar physics, tactical CPD pursuit AI
 // (pursuit cruisers, ramming interceptors, airborne searchlight helicopter),
@@ -43,7 +42,6 @@ if (existsSync(join(here, 'screenshots'))) {
 verifyLimits(out);
 logBundleSummary(out);
 
-  // Solis Engine v2.1 AAA WebGL Revision Pass - Verified Dossier Generation
 const dossier = buildDossier(out, {
   text_max_bytes: 163840,
   screenshots: { max: 4, max_bytes: 262144 },

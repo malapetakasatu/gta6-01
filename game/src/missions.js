@@ -1,4 +1,4 @@
-// SOLIS CITY: CORAL COAST (v2.1 AAA WebGL Engine) - 8-Mission Story Campaign Manager
+// SOLIS CITY: CORAL COAST - 8-Mission Story Campaign Manager
 // Narrative progression, checkpoints, district waypoints, objectives, rewards.
 
 const THREE = window.THREE;
