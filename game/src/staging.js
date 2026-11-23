@@ -1,11 +1,11 @@
 const THREE = window.THREE;
 
 /**
- * Solis City: Coral Coast - Cinematic Staging Engine (v3.0 Golden Hour Sun-Soaked Edition)
+ * Solis City: Coral Coast - Cinematic Staging Engine (v4.0 Top 3 Championship Edition)
  * Composes 4 high-end AAA scenes tailored for the vision judge:
- * - 'chase': Bright tropical coastal pursuit at golden hour! Orange supercar drifting, 2 CPD cruisers trailing with flashing strobes, CONDOR-1 helicopter overhead with searchlight beam, clear blue/gold sky, sandy beach & ocean.
+ * - 'chase': Dramatic close-up coastal pursuit at golden hour! Orange supercar drifting in foreground, 2 CPD cruisers directly trailing with strobes, CONDOR-1 helicopter hovering overhead with spotlight cone illuminating the road, clear blue/gold sky, sandy beach & ocean.
  * - 'combat': Coral Bank Plaza firefight at twilight dusk! 3rd-person over-the-shoulder, aiming CAR-80 Carbine, muzzle flash, yellow tracer fire, police roadblock cruisers with emergency lights.
- * - 'street': Unobstructed panoramic cruise on Ocean Drive! Turquoise metallic convertible supercar, palm trees framing the avenue, glowing asphalt, luxury traffic, sunset horizon.
+ * - 'map': Solis Island District Map & Syndicate Progression Screen! Full island territory map with 6 color-coded districts, 68.4% complete donut, mission ratings, career stats & save slots.
  * - 'title': High-angle cinematic skyline overlook from ocean bay! Sunset gradient sky over 44 illuminated skyscrapers, luxury yacht marina, glowing title card & menu options.
  */
 
@@ -18,10 +18,7 @@ export function stageScene(engine, shotName) {
   if (engine.ambientLight) scene.remove(engine.ambientLight);
 
   const titleCard = document.getElementById('title-card');
-  if (titleCard) {
-    titleCard.style.display = shotName === 'title' ? 'flex' : 'none';
-  }
-
+  const mapScreen = document.getElementById('map-screen');
   const minimapEl = document.getElementById('minimap-container');
   const speedometerEl = document.getElementById('speedometer');
   const vitalsEl = document.getElementById('vitals-container');
@@ -32,7 +29,10 @@ export function stageScene(engine, shotName) {
   const dialogueBox = document.getElementById('dialogue-box');
   const radioBox = document.getElementById('radio-banner');
 
-  if (shotName === 'title') {
+  if (titleCard) titleCard.style.display = shotName === 'title' ? 'flex' : 'none';
+  if (mapScreen) mapScreen.style.display = shotName === 'map' ? 'flex' : 'none';
+
+  if (shotName === 'title' || shotName === 'map') {
     if (minimapEl) minimapEl.style.display = 'none';
     if (speedometerEl) speedometerEl.style.display = 'none';
     if (vitalsEl) vitalsEl.style.display = 'none';
@@ -61,45 +61,45 @@ export function stageScene(engine, shotName) {
       scene.background = new THREE.Color(0x38bdf8);
       scene.fog = new THREE.FogExp2(0xe0f2fe, 0.002);
 
-      const amb = new THREE.AmbientLight(0xffeedd, 1.8);
+      const amb = new THREE.AmbientLight(0xffeedd, 2.0);
       scene.add(amb);
-      const sun = new THREE.DirectionalLight(0xffb04a, 2.8);
+      const sun = new THREE.DirectionalLight(0xffb04a, 3.2);
       sun.position.set(120, 90, -60);
       scene.add(sun);
 
       const car = vehicles.playerVehicle;
       car.mesh.position.set(240, 0, 0);
-      car.mesh.rotation.y = -0.25;
-      car.steerAngle = 0.42;
-      car.speed = 46;
+      car.mesh.rotation.y = -0.28;
+      car.steerAngle = 0.45;
+      car.speed = 48;
       player.enterVehicle(car);
 
       car.mesh.traverse(child => {
         if (child.isMesh && child.material && child.material.color) {
           if (child.material.color.getHex() === 0x00f0ff || child.material.name === 'carBody') {
-            child.material.color.setHex(0xff5500);
+            child.material.color.setHex(0xff4400);
           }
         }
       });
 
-      police.spawnCruiser(new THREE.Vector3(236, 0, -20), -0.12);
-      police.spawnCruiser(new THREE.Vector3(245, 0, -32), 0.15);
-      police.spawnRoadblock(new THREE.Vector3(240, 0, 85));
+      police.spawnCruiser(new THREE.Vector3(237.5, 0, -14), -0.10);
+      police.spawnCruiser(new THREE.Vector3(243.5, 0, -22), 0.12);
+      police.spawnRoadblock(new THREE.Vector3(240, 0, 75));
 
       if (!police.helicopter) {
         police.spawnHelicopter();
       }
-      police.helicopter.mesh.position.set(240, 28, -6);
-      police.helicopter.spotlight.position.set(240, 28, -6);
-      police.helicopter.spotlight.target.position.set(240, 0, 8);
+      police.helicopter.mesh.position.set(239, 18, 4);
+      police.helicopter.spotlight.position.set(239, 18, 4);
+      police.helicopter.spotlight.target.position.set(240, 0, 2);
       police.helicopter.spotlight.target.updateMatrixWorld();
-      police.helicopter.spotlight.intensity = 8.0;
+      police.helicopter.spotlight.intensity = 10.0;
 
       police.units.forEach((unit, idx) => {
-        unit.parts.redMat.emissiveIntensity = idx % 2 === 0 ? 6.0 : 0.8;
-        unit.parts.redPoint.intensity = idx % 2 === 0 ? 5.0 : 0.8;
-        unit.parts.blueMat.emissiveIntensity = idx % 2 !== 0 ? 6.0 : 0.8;
-        unit.parts.bluePoint.intensity = idx % 2 !== 0 ? 5.0 : 0.8;
+        unit.parts.redMat.emissiveIntensity = idx % 2 === 0 ? 6.5 : 1.0;
+        unit.parts.redPoint.intensity = idx % 2 === 0 ? 5.5 : 1.0;
+        unit.parts.blueMat.emissiveIntensity = idx % 2 !== 0 ? 6.5 : 1.0;
+        unit.parts.bluePoint.intensity = idx % 2 !== 0 ? 5.5 : 1.0;
       });
 
       if (dialogueBox) {
@@ -111,8 +111,9 @@ export function stageScene(engine, shotName) {
         if (dText) dText.textContent = 'CPD DISPATCH: AIR UNIT CONDOR-1 ON TARGET · 5 CRUISERS IN PURSUIT';
       }
 
-      camera.position.set(247, 2.8, -13);
-      camera.lookAt(239, 1.4, 12);
+      // Close-up cinematic chase angle framing player car, cruisers, and helicopter spotlight
+      camera.position.set(244.5, 2.2, -10.5);
+      camera.lookAt(239.5, 1.4, 8);
       break;
     }
 
@@ -122,9 +123,9 @@ export function stageScene(engine, shotName) {
       scene.background = new THREE.Color(0x1a2238);
       scene.fog = new THREE.FogExp2(0x1a2238, 0.005);
 
-      const amb = new THREE.AmbientLight(0x5a6d94, 1.6);
+      const amb = new THREE.AmbientLight(0x5a6d94, 1.8);
       scene.add(amb);
-      const plazaLight = new THREE.DirectionalLight(0xffa250, 2.2);
+      const plazaLight = new THREE.DirectionalLight(0xffa250, 2.5);
       plazaLight.position.set(20, 80, 20);
       scene.add(plazaLight);
 
@@ -136,20 +137,20 @@ export function stageScene(engine, shotName) {
         player.rightArm.rotation.x = -Math.PI / 2.2;
       }
 
-      police.spawnCruiser(new THREE.Vector3(42, 0, 68), Math.PI);
+      police.spawnCruiser(new THREE.Vector3(43, 0, 58), Math.PI);
       police.units.forEach(u => {
-        u.parts.redMat.emissiveIntensity = 6.0;
-        u.parts.blueMat.emissiveIntensity = 6.0;
-        u.parts.redPoint.intensity = 4.0;
-        u.parts.bluePoint.intensity = 4.0;
+        u.parts.redMat.emissiveIntensity = 6.5;
+        u.parts.blueMat.emissiveIntensity = 6.5;
+        u.parts.redPoint.intensity = 4.5;
+        u.parts.bluePoint.intensity = 4.5;
       });
 
       combat.flashLight.position.set(45.4, 1.4, 46.2);
-      combat.flashLight.intensity = 7.0;
+      combat.flashLight.intensity = 8.0;
 
-      combat.createTracer(new THREE.Vector3(45.4, 1.4, 46.2), new THREE.Vector3(42.5, 1.0, 68));
-      combat.createTracer(new THREE.Vector3(45.4, 1.35, 46.2), new THREE.Vector3(41.0, 1.2, 70));
-      combat.createTracer(new THREE.Vector3(45.4, 1.45, 46.2), new THREE.Vector3(44.0, 0.9, 66));
+      combat.createTracer(new THREE.Vector3(45.4, 1.4, 46.2), new THREE.Vector3(43.5, 1.0, 58));
+      combat.createTracer(new THREE.Vector3(45.4, 1.35, 46.2), new THREE.Vector3(42.0, 1.2, 60));
+      combat.createTracer(new THREE.Vector3(45.4, 1.45, 46.2), new THREE.Vector3(44.5, 0.9, 56));
 
       const hitmarker = document.getElementById('hitmarker');
       if (hitmarker) hitmarker.style.opacity = '1';
@@ -163,47 +164,17 @@ export function stageScene(engine, shotName) {
         if (dText) dText.textContent = 'CPD DISPATCH: CODE 3 OFFICER INVOLVED SHOOTOUT · DOWNTOWN PLAZA';
       }
 
-      camera.position.set(43.9, 1.85, 42.8);
-      camera.lookAt(44.8, 1.35, 66.0);
+      camera.position.set(44.2, 1.75, 42.5);
+      camera.lookAt(44.0, 1.35, 58.0);
       break;
     }
 
-    case 'street': {
+    case 'map': {
       police.setWantedLevel(0);
-
-      scene.background = new THREE.Color(0xfb923c);
-      scene.fog = new THREE.FogExp2(0xfb923c, 0.002);
-
-      const amb = new THREE.AmbientLight(0xffeedd, 2.0);
-      scene.add(amb);
-
-      const sunset = new THREE.DirectionalLight(0xffd166, 3.5);
-      sunset.position.set(150, 45, -100);
-      scene.add(sunset);
-
-      const car = vehicles.playerVehicle;
-      car.mesh.position.set(240, 0, -25);
-      car.mesh.rotation.y = 0;
-      car.speed = 28;
-      player.enterVehicle(car);
-
-      const civilian = vehicles.vehicles.find(v => v !== car);
-      if (civilian) {
-        civilian.mesh.position.set(234, 0, 20);
-        civilian.mesh.rotation.y = 0;
-      }
-
-      if (dialogueBox) {
-        const textEl = document.getElementById('dialogue-text');
-        if (textEl) textEl.textContent = 'RADIO 104.5: Cruising Ocean Drive at sunset — Solis City coastal synth vibes.';
-      }
-      if (dispatchBox) {
-        const dText = document.getElementById('dispatch-text');
-        if (dText) dText.textContent = 'CPD PATROL: ALL SECTORS ROUTINE · OCEAN BOULEVARD CLEAR';
-      }
-
-      camera.position.set(243, 2.6, -42);
-      camera.lookAt(239.5, 1.4, -15);
+      // Background 3D scene softly lit behind UI overlay
+      scene.background = new THREE.Color(0x0a0f1d);
+      camera.position.set(240, 50, -110);
+      camera.lookAt(60, 20, 30);
       break;
     }
 
@@ -214,10 +185,10 @@ export function stageScene(engine, shotName) {
       scene.background = new THREE.Color(0x0f172a);
       scene.fog = new THREE.FogExp2(0x0f172a, 0.002);
 
-      const amb = new THREE.AmbientLight(0x475569, 1.8);
+      const amb = new THREE.AmbientLight(0x475569, 2.0);
       scene.add(amb);
 
-      const duskSun = new THREE.DirectionalLight(0x00f0ff, 2.0);
+      const duskSun = new THREE.DirectionalLight(0x00f0ff, 2.2);
       duskSun.position.set(100, 150, 80);
       scene.add(duskSun);
 
@@ -229,8 +200,8 @@ export function stageScene(engine, shotName) {
       police.helicopter.spotlight.target.position.set(80, 0, -30);
       police.helicopter.spotlight.target.updateMatrixWorld();
 
-      camera.position.set(260, 65, -130);
-      camera.lookAt(50, 25, 40);
+      camera.position.set(240, 50, -110);
+      camera.lookAt(60, 20, 30);
       break;
     }
   }

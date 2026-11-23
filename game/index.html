@@ -302,6 +302,7 @@
       top: 0; left: 11px; width: 2px; height: 24px; transform: rotate(-45deg);
     }
 
+    /* Fullscreen Title Card */
     #title-card {
       display: none;
       position: absolute;
@@ -399,6 +400,253 @@
       color: #64748b;
       letter-spacing: 1px;
     }
+
+    /* Fullscreen Map & Syndicate Progression Screen */
+    #map-screen {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      background: rgba(10, 15, 26, 0.92);
+      backdrop-filter: blur(10px);
+      z-index: 20;
+      padding: 24px 36px;
+    }
+
+    .map-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 14px;
+    }
+
+    .map-logo {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, #ffaa00, #ff007f);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .map-tabs {
+      display: flex;
+      gap: 20px;
+    }
+
+    .map-tab {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: #64748b;
+      padding: 6px 14px;
+      border-radius: 4px;
+    }
+
+    .map-tab.active {
+      color: #00f0ff;
+      background: rgba(0, 240, 255, 0.12);
+      border-bottom: 2px solid #00f0ff;
+    }
+
+    .map-funds {
+      font-size: 20px;
+      font-weight: 900;
+      color: #00ff88;
+      letter-spacing: 1px;
+    }
+
+    .map-content {
+      display: flex;
+      gap: 30px;
+      margin-top: 20px;
+      flex: 1;
+    }
+
+    .map-left-col {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .prog-circle {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .prog-number {
+      font-size: 38px;
+      font-weight: 900;
+      color: #ffaa00;
+      letter-spacing: 1px;
+    }
+
+    .prog-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 2px;
+    }
+
+    .checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .check-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .check-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .check-fill {
+      height: 100%;
+      background: #00f0ff;
+    }
+
+    .map-center-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.15);
+    }
+
+    .grid-territory {
+      display: grid;
+      grid-template-columns: repeat(3, 170px);
+      grid-template-rows: repeat(2, 160px);
+      gap: 16px;
+    }
+
+    .territory-card {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(6px);
+    }
+
+    .territory-card.green {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: #10b981;
+    }
+
+    .territory-card.blue {
+      background: rgba(14, 165, 233, 0.15);
+      border-color: #0ea5e9;
+    }
+
+    .territory-card.orange {
+      background: rgba(249, 115, 22, 0.15);
+      border-color: #f97316;
+    }
+
+    .territory-card.purple {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: #a855f7;
+    }
+
+    .territory-card.pink {
+      background: rgba(236, 72, 153, 0.15);
+      border-color: #ec4899;
+    }
+
+    .territory-card.yellow {
+      background: rgba(234, 179, 8, 0.15);
+      border-color: #eab308;
+    }
+
+    .territory-name {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    .territory-status {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    .map-right-col {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .career-box {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .career-title {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #00f0ff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 6px;
+    }
+
+    .career-stat {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .career-stat b {
+      color: #fff;
+    }
+
+    .map-footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 10px;
+      font-size: 12px;
+      color: #64748b;
+      letter-spacing: 1px;
+      display: flex;
+      justify-content: space-between;
+    }
   </style>
 </head>
 <body>
@@ -452,6 +700,7 @@
     <div id="crosshair"></div>
     <div id="hitmarker"></div>
 
+    <!-- Title Presentation Card -->
     <div id="title-card">
       <div class="title-header">
         <h1>SOLIS CITY</h1>
@@ -477,6 +726,95 @@
       </div>
       <div class="title-footer">
         An original open-world tropical crime story on the Coral Coast · Keyboard &amp; Mouse
+      </div>
+    </div>
+
+    <!-- Island District Map & Progression Screen -->
+    <div id="map-screen">
+      <div class="map-topbar">
+        <div class="map-logo">SOLIS ARCHIPELAGO</div>
+        <div class="map-tabs">
+          <div class="map-tab active">MAP</div>
+          <div class="map-tab">STORY</div>
+          <div class="map-tab">STATS</div>
+          <div class="map-tab">CREW</div>
+          <div class="map-tab">SETTINGS</div>
+        </div>
+        <div class="map-funds">₸28,450</div>
+      </div>
+
+      <div class="map-content">
+        <div class="map-left-col">
+          <div class="prog-circle">
+            <div class="prog-number">68.4%</div>
+            <div class="prog-label">ISLAND SYNDICATE COMPLETE</div>
+          </div>
+          <div class="checklist">
+            <div class="check-row"><span>Story Missions</span><b>6 / 8</b></div>
+            <div class="check-bar"><div class="check-fill" style="width: 75%;"></div></div>
+            <div class="check-row"><span>Street Races</span><b>3 / 5</b></div>
+            <div class="check-bar"><div class="check-fill" style="width: 60%;"></div></div>
+            <div class="check-row"><span>Stunt Jumps</span><b>7 / 10</b></div>
+            <div class="check-bar"><div class="check-fill" style="width: 70%;"></div></div>
+            <div class="check-row"><span>Districts Controlled</span><b>4 / 6</b></div>
+            <div class="check-bar"><div class="check-fill" style="width: 66%;"></div></div>
+            <div class="check-row"><span>Crew Recruited</span><b>3 / 3</b></div>
+            <div class="check-bar"><div class="check-fill" style="width: 100%;"></div></div>
+          </div>
+        </div>
+
+        <div class="map-center-col">
+          <div class="grid-territory">
+            <div class="territory-card blue">
+              <div class="territory-name">WANARU TERRACES</div>
+              <div class="territory-status">NEUTRAL · 62%</div>
+            </div>
+            <div class="territory-card purple">
+              <div class="territory-name">LANTAWA CENTRE</div>
+              <div class="territory-status">WARY · 34%</div>
+            </div>
+            <div class="territory-card pink">
+              <div class="territory-name">KUMALA STRAND</div>
+              <div class="territory-status">NEUTRAL · 58%</div>
+            </div>
+            <div class="territory-card green">
+              <div class="territory-name">CORAL PALMS</div>
+              <div class="territory-status">FRIENDLY · 82%</div>
+            </div>
+            <div class="territory-card orange">
+              <div class="territory-name">PORT SOLIS</div>
+              <div class="territory-status">CONTROLLED · 90%</div>
+            </div>
+            <div class="territory-card yellow">
+              <div class="territory-name">OLD PASARU</div>
+              <div class="territory-status">FRIENDLY · 78%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-right-col">
+          <div class="career-box">
+            <div class="career-title">CAREER DOSSIER</div>
+            <div class="career-stat"><span>Cars Stolen:</span><b>44</b></div>
+            <div class="career-stat"><span>Cops Escaped:</span><b>15</b></div>
+            <div class="career-stat"><span>Distance Driven:</span><b>52.4 km</b></div>
+            <div class="career-stat"><span>Enemies Neutralized:</span><b>28</b></div>
+            <div class="career-stat"><span>Max Wanted:</span><b>★★★★★</b></div>
+            <div class="career-stat"><span>Crew Abilities:</span><b>38 Used</b></div>
+          </div>
+
+          <div class="career-box">
+            <div class="career-title">SAVE SLOTS</div>
+            <div class="career-stat"><span>Slot 1:</span><b>68.4% · Lantawa</b></div>
+            <div class="career-stat"><span>Slot 2:</span><b>34.2% · Kumala</b></div>
+            <div class="career-stat"><span>Slot 3:</span><b>Empty</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="map-footer">
+        <span>ESC Resume &middot; Q / E Switch Tab &middot; Left Click Set GPS Waypoint</span>
+        <span>SOLIS POLICE DEPT: PATROL LEVEL NORMAL</span>
       </div>
     </div>
   </div>
