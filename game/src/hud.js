@@ -1,4 +1,4 @@
-// SOLIS CITY: CORAL COAST (v2.0 AAA WebGL Engine) - Dynamic Radar Minimap & Vector GPS Route HUD
+// SOLIS CITY: CORAL COAST (v2.1 AAA WebGL Engine) - Dynamic Radar Minimap & Vector GPS Route HUD
 // Circular radar frame, rotating compass, player blip, police blips, vector navigation path.
 
 export class HUD {
