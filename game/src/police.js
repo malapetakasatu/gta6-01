@@ -179,28 +179,42 @@ export class PoliceManager {
   spawnHelicopter() {
     const heliGroup = new THREE.Group();
 
-    // Fuselage
-    const fuseGeo = new THREE.BoxGeometry(2.4, 2.2, 7.5);
-    const fuseMat = new THREE.MeshStandardMaterial({ color: 0x16181f, metalness: 0.8, roughness: 0.3 });
-    const fuselage = new THREE.Mesh(fuseGeo, fuseMat);
-    fuselage.position.y = 1.1;
-    heliGroup.add(fuselage);
+    // Fuselage - Upper Navy Blue
+    const fuseTopGeo = new THREE.BoxGeometry(2.4, 1.2, 7.5);
+    const fuseTopMat = new THREE.MeshStandardMaterial({ color: 0x0f2238, metalness: 0.85, roughness: 0.2 });
+    const fuseTop = new THREE.Mesh(fuseTopGeo, fuseTopMat);
+    fuseTop.position.y = 1.6;
+    heliGroup.add(fuseTop);
 
-    // Glass cockpit
+    // Fuselage - Lower White Belly & CPD Markings
+    const fuseBottomGeo = new THREE.BoxGeometry(2.38, 1.0, 7.4);
+    const fuseBottomMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.2, roughness: 0.4 });
+    const fuseBottom = new THREE.Mesh(fuseBottomGeo, fuseBottomMat);
+    fuseBottom.position.y = 0.5;
+    heliGroup.add(fuseBottom);
+
+    // CPD Gold Star Badge / Side Stripe
+    const stripeGeo = new THREE.BoxGeometry(2.42, 0.22, 5.2);
+    const stripeMat = new THREE.MeshStandardMaterial({ color: 0xffbb00, emissive: 0xffaa00, emissiveIntensity: 1.5 });
+    const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+    stripe.position.set(0, 1.1, 0.2);
+    heliGroup.add(stripe);
+
+    // Glass cockpit with deep reflections
     const cockGeo = new THREE.BoxGeometry(2.2, 1.6, 2.8);
-    const cockMat = new THREE.MeshStandardMaterial({ color: 0x0a1525, metalness: 0.9, roughness: 0.1 });
+    const cockMat = new THREE.MeshStandardMaterial({ color: 0x06111f, metalness: 0.95, roughness: 0.05 });
     const cockpit = new THREE.Mesh(cockGeo, cockMat);
     cockpit.position.set(0, 1.2, 2.5);
     heliGroup.add(cockpit);
 
-    // Tail boom & vertical fin
+    // Tail boom & vertical fin (Navy)
     const tailGeo = new THREE.BoxGeometry(0.6, 0.6, 6.0);
-    const tail = new THREE.Mesh(tailGeo, fuseMat);
+    const tail = new THREE.Mesh(tailGeo, fuseTopMat);
     tail.position.set(0, 1.4, -6.0);
     heliGroup.add(tail);
 
     const finGeo = new THREE.BoxGeometry(0.2, 2.2, 1.4);
-    const fin = new THREE.Mesh(finGeo, fuseMat);
+    const fin = new THREE.Mesh(finGeo, fuseTopMat);
     fin.position.set(0, 2.2, -8.6);
     heliGroup.add(fin);
 
@@ -225,23 +239,41 @@ export class PoliceManager {
     rotorHub.add(blade1, blade2);
     heliGroup.add(rotorHub);
 
+    // Semi-transparent high-speed spinning rotor motion blur disc
+    const discGeo = new THREE.CylinderGeometry(5.6, 5.6, 0.04, 32);
+    const discMat = new THREE.MeshBasicMaterial({
+      color: 0x111827,
+      transparent: true,
+      opacity: 0.45,
+    });
+    const rotorDisc = new THREE.Mesh(discGeo, discMat);
+    rotorDisc.position.set(0, 2.45, 0.2);
+    heliGroup.add(rotorDisc);
+
+    // Tail rotor motion blur disc
+    const tailDiscGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.02, 16);
+    tailDiscGeo.rotateZ(Math.PI / 2);
+    const tailDisc = new THREE.Mesh(tailDiscGeo, discMat);
+    tailDisc.position.set(0.3, 2.2, -8.6);
+    heliGroup.add(tailDisc);
+
     // High intensity searchlight cone
-    const searchlight = new THREE.SpotLight(0xf0f8ff, 6.0, 75, Math.PI / 6, 0.4, 1.2);
+    const searchlight = new THREE.SpotLight(0xffffff, 8.0, 85, Math.PI / 5, 0.35, 1.1);
     searchlight.position.set(0, 0, 1.8);
     heliGroup.add(searchlight);
 
     // Volumetric spotlight visual cone
-    const coneGeo = new THREE.ConeGeometry(8, 35, 16, 1, true);
+    const coneGeo = new THREE.ConeGeometry(7, 30, 16, 1, true);
     coneGeo.rotateX(-Math.PI / 2);
     const coneMat = new THREE.MeshBasicMaterial({
-      color: 0xccdfff,
+      color: 0xe0f2fe,
       transparent: true,
-      opacity: 0.15,
+      opacity: 0.22,
       side: THREE.DoubleSide,
       depthWrite: false,
     });
     const coneMesh = new THREE.Mesh(coneGeo, coneMat);
-    coneMesh.position.set(0, -17.5, 0);
+    coneMesh.position.set(0, -15, 0);
     searchlight.add(coneMesh);
 
     heliGroup.position.set(0, 38, -20);

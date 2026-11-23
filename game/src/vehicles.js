@@ -21,15 +21,23 @@ export class VehicleManager {
     // Veloce GTS Supercar Chassis (Low-slung, aerodynamic, exotic Italian styling)
     const bodyGeo = new THREE.BoxGeometry(2.2, 0.72, 4.8);
     const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0x00e5ff, // Electric Cyan metallic finish
-      metalness: 0.9,
+      color: 0xff4e00, // Electric Tangerine / Coral Orange finish
+      metalness: 0.85,
       roughness: 0.15,
       clearcoat: 1.0,
       clearcoatRoughness: 0.1,
     });
+    bodyMat.name = 'carBody';
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.55;
     carGroup.add(body);
+
+    // Dual Black Racing Stripes along hood and roof
+    const stripeGeo = new THREE.BoxGeometry(0.5, 0.02, 4.8);
+    const stripeMat = new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.3 });
+    const stripes = new THREE.Mesh(stripeGeo, stripeMat);
+    stripes.position.set(0, 0.92, 0);
+    carGroup.add(stripes);
 
     // Aerodynamic tapered cockpit canopy
     const canopyGeo = new THREE.BoxGeometry(1.8, 0.62, 2.4);
@@ -43,18 +51,24 @@ export class VehicleManager {
     carGroup.add(canopy);
 
     // Carbon fiber rear wing spoiler
-    const wingGeo = new THREE.BoxGeometry(2.3, 0.08, 0.55);
+    const wingGeo = new THREE.BoxGeometry(2.4, 0.08, 0.55);
     const carbonMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4 });
     const wing = new THREE.Mesh(wingGeo, carbonMat);
-    wing.position.set(0, 1.25, -2.15);
+    wing.position.set(0, 1.3, -2.15);
     carGroup.add(wing);
 
     // Spoiler upright struts
-    const strutL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.45, 0.15), carbonMat);
-    strutL.position.set(-0.7, 1.0, -2.15);
-    const strutR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.45, 0.15), carbonMat);
-    strutR.position.set(0.7, 1.0, -2.15);
+    const strutL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5, 0.15), carbonMat);
+    strutL.position.set(-0.75, 1.05, -2.15);
+    const strutR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5, 0.15), carbonMat);
+    strutR.position.set(0.75, 1.05, -2.15);
     carGroup.add(strutL, strutR);
+
+    // Aggressive Rear Diffuser
+    const diffGeo = new THREE.BoxGeometry(2.1, 0.25, 0.4);
+    const diffuser = new THREE.Mesh(diffGeo, carbonMat);
+    diffuser.position.set(0, 0.3, -2.35);
+    carGroup.add(diffuser);
 
     // Glowing LED Headlights
     const headlampMat = new THREE.MeshStandardMaterial({
