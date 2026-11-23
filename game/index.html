@@ -32,7 +32,6 @@
       outline: none;
     }
 
-    /* Cyberpunk HUD Layer */
     #hud-overlay {
       position: absolute;
       top: 0;
@@ -43,7 +42,6 @@
       pointer-events: none;
     }
 
-    /* Radar Minimap */
     #minimap-container {
       position: absolute;
       bottom: 25px;
@@ -60,7 +58,6 @@
       border-radius: 50%;
     }
 
-    /* Speedometer */
     #speedometer {
       position: absolute;
       bottom: 25px;
@@ -90,7 +87,6 @@
       color: #ffaa00;
     }
 
-    /* Wanted Stars */
     #wanted-stars {
       position: absolute;
       top: 25px;
@@ -117,7 +113,6 @@
       box-shadow: 0 0 16px #ff0044;
     }
 
-    /* Weapon & Ammo HUD */
     #weapon-hud {
       position: absolute;
       top: 65px;
@@ -144,7 +139,6 @@
       color: #ffffff;
     }
 
-    /* Player Vitals */
     #vitals-container {
       position: absolute;
       bottom: 215px;
@@ -168,7 +162,6 @@
       height: 100%;
       background: #00ff88;
       box-shadow: 0 0 8px #00ff88;
-      transition: width 0.2s;
     }
 
     #armor-bar {
@@ -176,10 +169,8 @@
       height: 100%;
       background: #00d0ff;
       box-shadow: 0 0 8px #00d0ff;
-      transition: width 0.2s;
     }
 
-    /* Mission Objectives */
     #mission-card {
       position: absolute;
       top: 25px;
@@ -188,7 +179,7 @@
       border-left: 4px solid #ffaa00;
       padding: 12px 18px;
       border-radius: 4px;
-      max-width: 320px;
+      max-width: 340px;
       backdrop-filter: blur(8px);
     }
 
@@ -214,26 +205,69 @@
       margin-top: 6px;
     }
 
-    /* Toast Notification */
-    #hud-toast {
+    #dispatch-box {
       position: absolute;
-      top: 35px;
-      left: 50%;
-      transform: translate(-50%, -10px);
-      background: rgba(15, 20, 35, 0.95);
-      border: 1px solid #00f0ff;
-      color: #00f0ff;
+      top: 110px;
+      left: 25px;
+      background: rgba(15, 23, 42, 0.85);
+      border-left: 4px solid #00f0ff;
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-size: 12px;
       font-weight: 700;
-      letter-spacing: 1.5px;
-      font-size: 15px;
-      padding: 12px 28px;
-      border-radius: 30px;
-      opacity: 0;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
+      letter-spacing: 1px;
+      color: #38bdf8;
+      backdrop-filter: blur(6px);
     }
 
-    /* Center Crosshair */
+    #dialogue-box {
+      position: absolute;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(10, 15, 28, 0.9);
+      border-left: 4px solid #ff007f;
+      padding: 10px 20px;
+      border-radius: 6px;
+      max-width: 650px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    #dialogue-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff007f, #00f0ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 18px;
+      color: #fff;
+    }
+
+    #dialogue-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
+      line-height: 1.4;
+    }
+
+    #radio-banner {
+      position: absolute;
+      bottom: 95px;
+      right: 35px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #cbd5e1;
+      text-shadow: 0 0 8px rgba(0,0,0,0.8);
+    }
+
     #crosshair {
       position: absolute;
       top: 50%;
@@ -246,7 +280,6 @@
       box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
     }
 
-    /* Hitmarker */
     #hitmarker {
       position: absolute;
       top: 50%;
@@ -256,7 +289,6 @@
       height: 24px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.05s ease;
     }
     #hitmarker::before, #hitmarker::after {
       content: '';
@@ -270,38 +302,102 @@
       top: 0; left: 11px; width: 2px; height: 24px; transform: rotate(-45deg);
     }
 
-    /* Title Presentation Banner */
     #title-card {
       display: none;
       position: absolute;
-      bottom: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-      background: rgba(8, 12, 22, 0.8);
-      padding: 20px 48px;
-      border-top: 2px solid #00f0ff;
-      border-bottom: 2px solid #ff007f;
-      border-radius: 8px;
-      backdrop-filter: blur(12px);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 60px 80px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.85) 100%);
+      backdrop-filter: blur(4px);
     }
 
-    #title-card h1 {
-      font-size: 42px;
+    .title-header h1 {
+      font-size: 64px;
       font-weight: 900;
-      letter-spacing: 8px;
+      letter-spacing: 6px;
       background: linear-gradient(135deg, #00f0ff, #ff007f);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 30px rgba(0, 240, 255, 0.6);
+      text-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
     }
 
-    #title-card h2 {
-      font-size: 18px;
-      font-weight: 600;
+    .title-header h2 {
+      font-size: 20px;
+      font-weight: 700;
       letter-spacing: 6px;
       color: #ffaa00;
-      margin-top: 6px;
+      margin-top: 4px;
+    }
+
+    .title-body {
+      display: flex;
+      gap: 60px;
+      margin-top: auto;
+      margin-bottom: 40px;
+    }
+
+    .title-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 260px;
+    }
+
+    .menu-item {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      padding: 10px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      color: #94a3b8;
+    }
+
+    .menu-item.active {
+      color: #00f0ff;
+      background: rgba(0, 240, 255, 0.15);
+      border-left: 4px solid #00f0ff;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+    }
+
+    .title-slots {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      max-width: 500px;
+    }
+
+    .slot-card {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-left: 4px solid #ff007f;
+      padding: 14px 20px;
+      border-radius: 6px;
+    }
+
+    .slot-card h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+
+    .slot-card p {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .title-footer {
+      font-size: 14px;
+      font-weight: 600;
+      color: #64748b;
+      letter-spacing: 1px;
     }
   </style>
 </head>
@@ -310,9 +406,13 @@
 
   <div id="hud-overlay">
     <div id="mission-card">
-      <div id="obj-title">MISSION</div>
-      <div id="obj-desc">Explore Solis City</div>
-      <div id="obj-dist">0m to target</div>
+      <div id="obj-title">MISSION 7 · CORAL RUN</div>
+      <div id="obj-desc">Ram through the roadblock to reach Kumala Pier!</div>
+      <div id="obj-dist">NEXT: Vanish into Marina</div>
+    </div>
+
+    <div id="dispatch-box">
+      <span id="dispatch-text">CPD DISPATCH: CONDOR-1 AIR UNIT DEPLOYED · 5 SQUAD CARS IN PURSUIT</span>
     </div>
 
     <div id="vitals-container">
@@ -324,16 +424,23 @@
       <canvas id="minimap-canvas" width="180" height="180"></canvas>
     </div>
 
-    <div id="speedometer">
-      <div id="speed-value">0 MPH</div>
-      <div id="gear-value">GEAR N</div>
+    <div id="dialogue-box">
+      <div id="dialogue-avatar">LC</div>
+      <div id="dialogue-text">LEO CORTEZ: Pedal down! Condor-1 has eyes on us, cut through the pier roadblock!</div>
     </div>
 
+    <div id="speedometer">
+      <div id="speed-value">118 MPH</div>
+      <div id="gear-value">GEAR 5 · VELOCE GTS</div>
+    </div>
+
+    <div id="radio-banner">🎵 VICE SYNTH 104.5 — Tropical Beats</div>
+
     <div id="wanted-stars">
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
-      <div class="star"></div>
+      <div class="star active strobe"></div>
+      <div class="star active strobe"></div>
+      <div class="star active strobe"></div>
+      <div class="star active strobe"></div>
       <div class="star"></div>
     </div>
 
@@ -344,11 +451,33 @@
 
     <div id="crosshair"></div>
     <div id="hitmarker"></div>
-    <div id="hud-toast"></div>
 
     <div id="title-card">
-      <h1>SOLIS CITY</h1>
-      <h2>CORAL COAST</h2>
+      <div class="title-header">
+        <h1>SOLIS CITY</h1>
+        <h2>CORAL COAST</h2>
+      </div>
+      <div class="title-body">
+        <div class="title-menu">
+          <div class="menu-item active">CONTINUE</div>
+          <div class="menu-item">NEW GAME</div>
+          <div class="menu-item">LOAD GAME</div>
+          <div class="menu-item">SETTINGS</div>
+        </div>
+        <div class="title-slots">
+          <div class="slot-card">
+            <h3>SLOT 1 · CHAPTER IV — COASTAL HEIST</h3>
+            <p>74.2% Complete · ₸48,250 · 18:45 · Ocean Boulevard</p>
+          </div>
+          <div class="slot-card">
+            <h3>SLOT 2 · CHAPTER II — VELOCE RUN</h3>
+            <p>32.0% Complete · ₸12,800 · 14:20 · Coral Shores</p>
+          </div>
+        </div>
+      </div>
+      <div class="title-footer">
+        An original open-world tropical crime story on the Coral Coast · Keyboard &amp; Mouse
+      </div>
     </div>
   </div>
 

@@ -1,33 +1,32 @@
 // Three.js ES Module wrapper bridging vendor runtime
 const THREE = window.THREE;
 export default THREE;
-export const {
-  Scene,
-  PerspectiveCamera,
-  WebGLRenderer,
-  Vector3,
-  Euler,
-  Group,
-  Mesh,
-  BoxGeometry,
-  PlaneGeometry,
-  CylinderGeometry,
-  SphereGeometry,
-  OctahedronGeometry,
-  ConeGeometry,
-  BufferGeometry,
-  MeshStandardMaterial,
-  MeshBasicMaterial,
-  LineBasicMaterial,
-  Line,
-  CanvasTexture,
-  AmbientLight,
-  DirectionalLight,
-  PointLight,
-  SpotLight,
-  FogExp2,
-  Raycaster,
-  RepeatWrapping,
-  DoubleSide,
-  Color,
-} = THREE;
+export const Clock = THREE.Clock;
+export const Scene = THREE.Scene;
+export const PerspectiveCamera = THREE.PerspectiveCamera;
+export const WebGLRenderer = THREE.WebGLRenderer;
+export const Vector3 = THREE.Vector3;
+export const Euler = THREE.Euler;
+export const Group = THREE.Group;
+export const Mesh = THREE.Mesh;
+export const BoxGeometry = THREE.BoxGeometry;
+export const PlaneGeometry = THREE.PlaneGeometry;
+export const CylinderGeometry = THREE.CylinderGeometry;
+export const SphereGeometry = THREE.SphereGeometry;
+export const OctahedronGeometry = THREE.OctahedronGeometry;
+export const ConeGeometry = THREE.ConeGeometry;
+export const BufferGeometry = THREE.BufferGeometry;
+export const MeshStandardMaterial = THREE.MeshStandardMaterial;
+export const MeshBasicMaterial = THREE.MeshBasicMaterial;
+export const LineBasicMaterial = THREE.LineBasicMaterial;
+export const Line = THREE.Line;
+export const CanvasTexture = THREE.CanvasTexture;
+export const AmbientLight = THREE.AmbientLight;
+export const DirectionalLight = THREE.DirectionalLight;
+export const PointLight = THREE.PointLight;
+export const SpotLight = THREE.SpotLight;
+export const FogExp2 = THREE.FogExp2;
+export const Raycaster = THREE.Raycaster;
+export const RepeatWrapping = THREE.RepeatWrapping;
+export const DoubleSide = THREE.DoubleSide;
+export const Color = THREE.Color;
